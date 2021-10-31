@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" >
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>SisTimeBot Settings </title>
+		<link rel="stylesheet" href="https://www.api.evilhost.org/ExternalCodes/SisBotCreator/SourceCode/SisTimeBot/style.css">
+	</head>
+	<body>
+		<div class="login-box">
+			<h2>تنظیمات سیس تایم بات</h2>
+			<form action="settings.php" method="GET">
+				<!-- Bot on OR off -->
+				<div class="row">
+					<div class="col-25">
+						<label for="bot">bot</label>
+					</div>
+					<div class="col-75">
+						<select id="bot" name="bot">
+							<option value="">none</option>
+							<option value="on">on</option>
+							<option value="off">off</option>
+						</select>
+					</div>
+				</div>
+				<br><hr><br>
+				<!-- AlwaysOnline on OR off -->
+				<div class="row">
+					<div class="col-25">
+						<label for="AlwaysOnline">AlwaysOnline</label><br>
+					</div>
+					<div class="col-75"><br>
+						<select id="AlwaysOnline" name="AlwaysOnline">
+							<option value="">none</option>
+							<option value="on">on</option>
+							<option value="off">off</option>
+						</select>
+					</div>
+				</div>
+				<br><hr><br>
+				<!-- timeName on OR off -->
+				<div class="row">
+					<div class="col-25">
+						<label for="timeName">timeName</label><br>
+					</div>
+					<div class="col-75"><br>
+						<select id="ttmeName" name="timeName">
+							<option value="">none</option>
+							<option value="on">on</option>
+							<option value="off">off</option>
+						</select>
+					</div>
+				</div>
+				<br><hr><br>
+				<!-- timeBio on OR off -->
+				<div class="row">
+					<div class="col-25">
+						<label for="timeBio">timeBio</label><br>
+					</div>
+					<div class="col-75"><br>
+						<select id="timeBio" name="timeBio">
+							<option value="">none</option>
+							<option value="on">on</option>
+							<option value="off">off</option>
+						</select>
+					</div>
+				</div>
+				<br><hr><br>
+				<!-- timePic on OR off -->
+				<div class="row">
+					<div class="col-25">
+						<label for="timePic">timePic</label><br>
+					</div>
+					<div class="col-75"><br>
+						<select id="timePic" name="timePic">
+							<option value="">none</option>
+							<option value="on">on</option>
+							<option value="off">off</option>
+						</select>
+					</div>
+				</div>
+				<br><hr><br>
+				<!-- sadeORfont on OR off -->
+				<div class="row">
+					<div class="col-25">
+						<label for="sadeORfont">sadeORfont</label><br>
+					</div>
+					<div class="col-75"><br>
+						<select id="sadeORfont" name="sadeORfont">
+							<option value="font">font</option>
+							<option value="sade">sade</option>
+						</select>
+					</div>
+				</div>
+				<br><hr><br>
+				<!-- Set textBio -->
+				<div class="user-box">
+					<input type="text" name="textBio" maxlength="71" placeholder="Click here...">
+					<label>Your Static textBio</label>
+				</div>
+				<input type="submit" value="send">
+			</form>
+			<hr>
+			
+			<form action="Add-Or-Del_Name-Or-Bio.php" method="POST">
+				<!-- Add New Random Name-->
+				<div class="user-box">
+				  <input type="text" name="AddName" maxlength="70" placeholder="Click here...">
+				  <label>Add New Random Name</label>
+				</div>
+				
+				<!-- Add New Random Bio-->
+				<div class="user-box">
+				  <input type="text" name="AddBio" maxlength="71" placeholder="Click here...">
+				  <label>Add New Random textBio</label>
+				</div>
+				
+				<!-- Delete A Random Name-->
+				<div class="user-box">
+					<input type="text" name="DelName" maxlength="70"placeholder="Click here...">
+				<label>Delete A Random Name</label>
+				</div>
+				
+				<!-- Delete A Random textBio-->
+				<div class="user-box">
+					<input type="text" name="DelBio" maxlength="71" placeholder="Click here...">
+						<label>Delete A Random textBio</label>
+				</div>
+			
+				<input type="submit" value="send">
+			</form><br><hr>
+			<h2><a href="Name_And_Bio_List.php">list of random textBio and names</a></h2>
+		</div>
+			
+		<!-- partial -->
+		<center>
+			<div id="myBox">
+				<h2 style="color:brown">اگه هر سعال ، نظر ، پیشنهاد ، مشکل یا ابهامی داشتین از من بپرسین :</h2>
+				<h2 style="color:yellow"><a href="https://t.me/UnK37">UnK37</a> ～ <a href="https://t.me/EHsup">EHsup</a> </h2>
+				<h2 style="color:gold"><a href="https://EviLHosT.org">EviLHosT.ORG</a> ～ <a href="https://t.me/SisTan_KinG">SisTan_KinG</a><br>In Progress</h2>
+			</div>
+		</center>
+	</body>
+</html>
