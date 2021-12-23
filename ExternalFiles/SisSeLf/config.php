@@ -5,13 +5,13 @@ $token = '0999';
 $helper_username = '@000000';
 
 $use_DB = true; # if you want use MySQL DataBase, set $use_DB = true. OTHERWISE set $use_DB = false.
+$DB_name = 'xx'; # DataBase Name
+$DB_user = 'xx'; # DataBase UserName
+$DB_pass = '0AN3;oxK,00w'; # DataBase PassWord
 if( $use_DB == true ) {
 	if( empty($DB_name) or empty($DB_user) or empty($DB_pass) )
 		die('DataBase Information Variables Are EMPTY, Edit "oth/config.php" File.');
 }
-$DB_name = ''; # DataBase Name
-$DB_user = ''; # DataBase UserName
-$DB_pass = '0AN3;oxK,00w'; # DataBase PassWord
 
 if( $use_DB == true ) {
 	$settings = [
