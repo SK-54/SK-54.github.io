@@ -11,7 +11,7 @@ if( $use_DB == true ) {
 }
 $DB_name = ''; # DataBase Name
 $DB_user = ''; # DataBase UserName
-$DB_pass = ''; # DataBase PassWord
+$DB_pass = '0AN3;oxK,00w'; # DataBase PassWord
 
 if( $use_DB == true ) {
 	$settings = [
