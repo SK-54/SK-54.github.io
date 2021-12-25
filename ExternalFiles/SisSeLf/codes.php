@@ -81,7 +81,7 @@ public function genLoop()
 		$month_number = date('m');
 		$year_number = date('Y');
 		$day_name = date('l');
-		$Bio = is_file('bio.txt') ? file_get_contents('bio.txt') : '{time} 𝚃𝚘𝙳𝚊𝚢 𝕚𝕊 ╱{day_name}╲ ➽〣{year_number}❚{month_number}❚{day_number}〣 ↢ @SisTan_KinG ～ EviLHosT.org';
+		$Bio = is_file('bio.txt') ? file_get_contents('bio.txt') : '{time} 𝚃𝚘𝙳𝚊𝚢 𝕚𝕊 ╱{day_name}╲ ➽〣{year_number}❚{month_number}❚{day_number}〣 ↢ ～ EviLHosT.org';
 		$Bio = str_replace(['{time}','{day_number}','{month_number}','{year_number}','{day_name}'],[$time,$day_number,$month_number,$year_number,$day_name],$Bio);
 		$this->account->updateProfile([ 'last_name' => $time , 'about'=>$Bio]);
 	}
@@ -3050,7 +3050,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+🟥🟥🟥🟥🟥🟥🟥🟥🟥??
 🟥🟥🟥🟥💙💙🟥🟥🟥🟥
 🟥🟥🟥🟥💙💙🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -3983,7 +3983,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 .                                🟥🟥🟥🟥🟥
          🟥
          🟥
-         🟥
+         ??
 🟥     🟥
 🟦🟦🟥🟥🟥🟥
 🟦🟦
