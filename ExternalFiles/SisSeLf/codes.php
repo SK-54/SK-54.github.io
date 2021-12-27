@@ -85,6 +85,23 @@ public function genLoop()
 		$Bio = str_replace(['{time}','{day_number}','{month_number}','{year_number}','{day_name}'],[$time,$day_number,$month_number,$year_number,$day_name],$Bio);
 		$this->account->updateProfile([ 'last_name' => $time , 'about'=>$Bio]);
 	}
+	if(file_exists('UPDATED') ){
+		$this->messages->sendMessage([
+		'peer' => 'me',
+		'message' =>"Bot UPDATED Successfully. For More Information Check Bot Help ✅
+	@SisTan_KinG ～ @SisSeLf",
+		'parse_mode'=>'markdown'
+		]);
+		unlink('UPDATED');
+	}
+	if( file_exists( 'restart' ) ) {
+		unlink( 'restart' );
+		$this->restart( );
+	}
+	if(file_exists('off') ){
+		unlink('off');
+		$this->stop();
+	}
 	return 30000;
 }
 
@@ -152,23 +169,7 @@ $codingmode = yield $this->getLocalContents("coding.txt");
 $reversemode = yield $this->getLocalContents("reversemode.txt");
 
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
-if( file_exists( 'restart' ) ) {
-	unlink( 'restart' );
-	$this->restart( );
-}
-if(file_exists('off') ){
-	unlink('off');
-	$this->stop();
-}
-if(file_exists('UPDATED') ){
-	yield $this->messages->sendMessage([
-	'peer' => 'me',
-	'message' =>"Bot UPDATED Successfully. For More Information Check Bot
-	 Help",
-	'parse_mode'=>'markdown'
-	]);
-	unlink('UPDATED');
-}
+
 if(is_file('MadelineProto.log') and filesize('MadelineProto.log')/1024 > 1024){
 	unlink('MadelineProto.log');
 }
@@ -981,7 +982,7 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
 .		🌼🌹🌷💐
 		 🌸SaLam 🌸
-			🌺??🌷💐
+			🌺🌹🌷💐
 "]);
 
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
@@ -5430,7 +5431,7 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 //============== Ping ==============
 if( preg_match( '/^[\/\#\!\.]?(ping|pimg|پینگ)$/si', $text ) ){
 $load = sys_getloadavg();
-yield $this->messages->sendMessage(['peer' => $peer, 'message' => "server ping : <b>$load[0]</b>", 'parse_mode'=>'html']);
+yield $this->messages->sendMessage(['peer' => $peer, 'message' => "Xxx server ping : <b>$load[0]</b>", 'parse_mode'=>'html']);
 }
 if( preg_match( '/^[\/\#\!\.]?(bot|ربات)$/si', $text ) ){
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => "Bot Remaining Time $remaining <b>( until $deadline )</b>", 'parse_mode'=>'html']);
@@ -5943,7 +5944,7 @@ $Eng = ['Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K',
 $Font_0 = ['𝐐','𝐖','𝐄','𝐑','𝐓','𝐘','𝐔','𝐈','𝐎','𝐏','𝐀','𝐒','𝐃','𝐅','𝐆','𝐇','𝐉','𝐊','𝐋','𝐙','𝐗','𝐂','𝐕','𝐁','𝐍','𝐌'];
 $Font_1 = ['𝑸','𝑾','𝑬','𝑹','𝑻','𝒀','𝑼','𝑰','𝑶','𝑷','𝑨','𝑺','𝑫','𝑭','𝑮','𝑯','𝑱','𝑲','𝑳','𝒁','𝑿','𝑪','𝑽','𝑩','𝑵','𝑴'];
 $Font_2 = ['𝑄','𝑊','𝐸','𝑅','𝑇','𝑌','𝑈','𝐼','𝑂','𝑃','𝐴','𝑆','𝐷','𝐹','𝐺','𝐻','𝐽','𝐾','𝐿','𝑍','𝑋','𝐶','𝑉','𝐵','𝑁','𝑀'];
-$Font_3 = ['𝗤','𝗪','𝗘','𝗥','𝗧','𝗬','𝗨','𝗜','𝗢','𝗣','𝗔','𝗦','𝗗','𝗙','𝗚','𝗛','𝗝','𝗞','𝗟','𝗭','𝗫','𝗖','𝗩','𝗕','𝗡','𝗠'];
+$Font_3 = ['𝗤','𝗪','𝗘','𝗥','𝗧','𝗬','𝗨','𝗜','𝗢','𝗣','𝗔','𝗦','𝗗','𝗙','𝗚','𝗛','𝗝','𝗞','𝗟','𝗭','𝗫','𝗖','𝗩','𝗕','??','𝗠'];
 $Font_4 = ['𝖰','𝖶','𝖤','𝖱','𝖳','𝖸','𝖴','𝖨','𝖮','𝖯','𝖠','𝖲','𝖣','𝖥','𝖦','𝖧','𝖩','𝖪','𝖫','𝖹','𝖷','𝖢','𝖵','𝖡','𝖭','𝖬'];
 $Font_5 = ['𝕼','𝖂','𝕰','𝕽','𝕵','𝚼','𝖀','𝕿','𝕺','𝕻','𝕬','𝕾','𝕯','𝕱','𝕲','𝕳','𝕴','𝕶','𝕷','𝖅','𝖃','𝕮','𝖁','𝕭','𝕹','𝕸'];
 $Font_6 = ['𝔔','𝔚','𝔈','ℜ','𝔍','ϒ','𝔘','𝔗','𝔒','𝔓','𝔄','𝔖','𝔇','𝔉','𝔊','ℌ','ℑ','𝔎','𝔏','ℨ','𝔛','ℭ','𝔙','𝔅','𝔑','𝔐'];
