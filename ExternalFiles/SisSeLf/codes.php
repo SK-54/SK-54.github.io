@@ -5443,7 +5443,8 @@ if( preg_match( '/^[\/\#\!\.]?(v|ver|version|و|ور|ورژن|نسخه)$/si', $t
 		$t = "Latest Version Is **$LatestVersion**, Your Bot Currect Version Is **$CurrectVersion** ⚠️ , Use  `/update`  Command To Update Your Bot.
 **@SisTan_KinG ～ @SisSeLf**";
 	}else{
-		$t = "**Your Bot is Up To Date ✅
+		$t = "Latest Version Is **$LatestVersion**, Your Bot Currect Version Is **$CurrectVersion**
+**Your Bot is Up To Date ✅
 @SisTanKinG ～ @SisSeLf**";
 	}
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => $t, 'parse_mode'=>'markdown']);
