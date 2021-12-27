@@ -807,7 +807,7 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' => 'دیگه نب
 }
 
 if ($text == 'لایک داری') {
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' =>'
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' =>'
 	┈┈┈┈┈┈▕▔╲┈┈┈┈┈
 	┈┈┈┈┈┈┈▏▕┈┈LIKE
 	┈┈┈┈┈┈┈▏▕▂▂▂┈┈
@@ -819,108 +819,108 @@ if ($text == 'لایک داری') {
 }
 
 if($text=='قلبز' or $text=='بقلب'){
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🤍' ]);
-	yield $MadelineProto->sleep(1);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️']);
-	yield $MadelineProto->sleep(1);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛']);
-	yield $MadelineProto->sleep(1);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚️']);
-	yield $MadelineProto->sleep(1);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💙️']);
-	yield $MadelineProto->sleep(1);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🖤️']);
-	yield $MadelineProto->sleep(1);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🤎️']);
-	yield $MadelineProto->sleep(1);	
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🤍' ]);
+	yield $this->sleep(1);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️']);
+	yield $this->sleep(1);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛']);
+	yield $this->sleep(1);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚️']);
+	yield $this->sleep(1);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💙️']);
+	yield $this->sleep(1);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🖤️']);
+	yield $this->sleep(1);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🤎️']);
+	yield $this->sleep(1);	
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️']);
 }
 
 if($text=='قلب3' or $text=='قلببب'){
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️🧡💛💚']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡❤️💛💚']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡💛❤️💚']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡💛💚❤️']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛🧡💚❤️']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛💚🧡❤️']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛💚❤️🧡']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚💛❤️🧡']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚❤️🧡💛']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️💚🧡💛']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️🧡💚💛']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️🧡💛💚']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡❤️💛💚']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡💛❤️💚']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡💛💚❤️']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛🧡💚❤️']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛💚🧡❤️']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛💚❤️🧡']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚💛❤️🧡']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚❤️💛🧡']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚❤️🧡💛']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️💚🧡💛']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️🧡💚💛']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️🧡💛💚']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡❤️💛💚']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡💛❤️💚']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡💛💚❤️']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛🧡💚❤️']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛💚🧡❤️']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛💚❤️🧡']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚💛❤️🧡']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚❤️🧡💛']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️💚🧡💛']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️🧡💚💛']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️🧡💛💚']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡❤️💛💚']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡💛❤️💚']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🧡💛💚❤️']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛🧡💚❤️']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛💚🧡❤️']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💛💚❤️🧡']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚💛❤️🧡']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚❤️💛🧡']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💚❤️🧡💛']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️💚🧡💛']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '❤️🧡💚💛']);
 }
 
 if ($text=='قلب4' or $text=='قلبببب') {
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "❤️🧡💛💚"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💙🖤💛"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🤎💛💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚❤️🖤🧡"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💚🧡🖤"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🧡🤎💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💙🧡💜🧡"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚💛💙💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤💛💙🤍"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤🤍💙❤"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "❤️🧡💛💚"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💙🖤💛"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🤎💛💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚❤️🖤🧡"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💚🧡🖤"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🧡🤎💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💙🧡??🧡"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚💛💙💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤💛💙🤍"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤🤍💙❤"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "❤️🧡💛💚"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💙🖤💛"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🤎💛💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚❤️🖤🧡"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💚🧡🖤"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🧡🤎💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💙🧡💜🧡"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚💛💙💜"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤💛💙🤍"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤🤍💙❤"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "❤️🧡💛💚"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💙🖤💛"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🤎💛💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚❤️🖤🧡"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💚🧡🖤"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🧡🤎💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💙🧡💜🧡"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚💛💙💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤💛💙🤍"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤🤍💙❤"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "❤️🧡💛💚"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💙🖤💛"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🤎💛💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚❤️🖤🧡"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💚🧡🖤"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🧡🤎💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💙🧡??🧡"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚💛💙💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤💛💙🤍"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤🤍💙❤"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "❤️🧡💛💚"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💙🖤💛"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🤎💛💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚❤️🖤🧡"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💜💚🧡🖤"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🤍🧡🤎💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💙🧡💜🧡"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "💚💛💙💜"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤💛💙🤍"]);
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "🖤🤍💙❤"]);
 }
 
 if($text=='کوه' or $text=='الماس'){
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏					 🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏					🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏					🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏				 🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏				🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏				🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏			 🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏			🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏			🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏		 🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏		🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏		🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏	 🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏	🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏	🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏ 🗻']);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏🗻']);
-	yield $MadelineProto->sleep(1); 
-	yield $MadelineProto->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💎']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏					 🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏					🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏					🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏				 🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏				🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏				🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏			 🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏			🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏			🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏		 🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏		🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏		🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏	 🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏	🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏	🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏ 🗻']);
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⛏🗻']);
+	yield $this->sleep(1); 
+	yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '💎']);
 }
 
 if($text=='bk' or $text=='بکیرم' or $text=='bekiram'){
 	$bk = ["🇮🇷","✅","😒","👅","😈","💦","💋","🧿","♾","♻️","✊🏻","🤪","🚫","👽","🐆","🕊","⚘","🌵","🍭","🍩","🎈","🎃","🎁","🎗","🧸","💎","🎵","📟","📯","💻","🔋","📀","🪔","📚","💰","💳","🗂","📍","🔫","🛡","🩸","🗑","📿","⛔️","🚸","☣️","🔆","✳️","#️⃣","ℹ️","🔘","🔹️","❗️","❕","⚠️","🎒","🎏","🎯","🃏","🧱","🌐","♨️","💋","🚦","🚧","⚓️","🪂","🛰","🚀","🛸","⏳","🍌","🥕","👑","😎","🎩","😂","💀","🍓","🌭","🔪","☕️","🍔","🐌","🐝","🐉","🦈","🐙","🐠","🦉","🦇","🦅","🐍","🕸","😴","🤯","😳","☠️","🤖","👻","😼","💫","🕳","👨🏻‍💻",];
 	$Aa = $bk[rand(0, count($bk)-1)];
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
 	$Aa$Aa$Aa$Aa 
 	$Aa					$Aa
 	$Aa						$Aa
@@ -930,7 +930,7 @@ if($text=='bk' or $text=='بکیرم' or $text=='bekiram'){
 	$Aa						$Aa
 	$Aa					$Aa
 	$Aa$Aa$Aa$Aa"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
 	$Aa			 $Aa
 	$Aa		 $Aa
 	$Aa	 $Aa
@@ -940,7 +940,7 @@ if($text=='bk' or $text=='بکیرم' or $text=='bekiram'){
 	$Aa	 $Aa
 	$Aa		 $Aa
 	$Aa			 $Aa"]);
-	yield $MadelineProto->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
 	$Aa$Aa$Aa$Aa			$Aa					 $Aa
 	$Aa					$Aa		$Aa				 $Aa
 	$Aa						$Aa	$Aa			 $Aa
@@ -2013,7 +2013,7 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "👺🎣      💳"]);
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "👺🎣     💳"]);
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "👺🎣    💳"]);
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "👺🎣   💳"]);
+yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "👺🎣   ??"]);
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "👺🎣  💳"]);
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "👺🎣 💳"]);
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "👺🎣💳"]);
