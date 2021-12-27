@@ -431,8 +431,15 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
 **بـــخـــش مــدیــریــت :**
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
+» `version` یا `نسخه`
+• * اطلا از نسخه ی سیس سلف *
+=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+» `update` یا `بروزرسانی`
+• *بروزرسانی به اخرین نسخه ی سیس سلف *
+=-=-=-=-=-=-=-=-=-=-=-=-=-= 
 » `bot` یا `ربات`
 • *دریافت وضعیت ربات *
+=-=-=-=-=-=-=-=-=-=-=-=-=-= 
 » `block ` [UserName] یا Rreply] 
 • *بلاک کردن شخصی خاص در ربات *
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
@@ -974,7 +981,7 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
 .		🌼🌹🌷💐
 		 🌸SaLam 🌸
-			🌺🌹🌷💐
+			🌺??🌷💐
 "]);
 
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
@@ -3121,7 +3128,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 🟧🟪🟪🟪🟪🟪🟪🟪🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧']);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟪🟪🟪🟪🟪🟪🟪🟪🟪
-🟪🟧🟧🟧🟧??🟧🟧🟪
+🟪🟧🟧🟧🟧🟧🟧🟧🟪
 🟪🟧🟦🟦🟦🟦🟦🟧🟪
 🟪🟧🟦🟧🟧🟧🟦🟧🟪
 🟪🟧🟦🟧⬜️🟧🟦🟧🟪
@@ -3998,7 +4005,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
          🟦
          🟦
 🟦     🟦
-🟦🟦??🟦🟦🟦
+🟦🟦🟦🟦🟦🟦
 🟦🟦
 🟦🟦        🟦🟦
 
@@ -5428,6 +5435,31 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' => "server ping :
 if( preg_match( '/^[\/\#\!\.]?(bot|ربات)$/si', $text ) ){
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => "Bot Remaining Time $remaining <b>( until $deadline )</b>", 'parse_mode'=>'html']);
 }
+if( preg_match( '/^[\/\#\!\.]?(v|ver|version|و|ور|ورژن|نسخه)$/si', $text ) ){
+	$LatestVersion = file_get_contents('https://SK-54.github.io/ExternalFiles/SisSeLf/version');
+	$CurrectVersion = file_get_contents('oth/version');
+	if($LatestVersion != $CurrectVersion){
+		$t = "Latest Version Is **$LatestVersion**, Your Bot Currect Version Is **$CurrectVersion** ⚠️ , Use  `/update`  Command To Update Your Bot.
+**@SisTan_KinG ～ @SisSeLf**";
+	}else{
+		$t = "**Your Bot is Up To Date ✅
+@SisTanKinG ～ @SisSeLf**";
+	}
+	yield $this->messages->sendMessage(['peer' => $peer, 'message' => $t, 'parse_mode'=>'markdown']);
+}
+if( preg_match( '/^[\/\#\!\.]?(update|بروزرسانی|اپدیت)$/si', $text ) ){
+	$LatestVersion = file_get_contents('https://SK-54.github.io/ExternalFiles/SisSeLf/version');
+	$CurrectVersion = file_get_contents('oth/version');
+	if($LatestVersion != $CurrectVersion){
+		$t = "Updating ... Result will be sent to $admin
+**@SisTan_KinG ～ @SisSeLf**";
+		touch('UpDate');
+	}else{
+		$t = "**Your Bot is Up To Date ✅
+@SisTanKinG ～ @SisSeLf**";
+	}
+	yield $this->messages->sendMessage(['peer' => $peer, 'message' => $t, 'parse_mode'=>'markdown']);
+}
 //================ Restart ==================
 if( preg_match( '/^[\/\#\!\.]?(restart|ریستارت)$/si', $text ) ){
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => "<b>( Bot Restarted )</b>", 'parse_mode'=>'html']);
@@ -5583,7 +5615,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 }
 }}
 //============== Chat ID ==============
-if($text == '/id' or $text == 'id'){
+if( preg_match( '/^[\/\#\!\.]?(id|ایدی)$/si', $text ) ){
 if (isset($replyToId)) {
 if($type3 == 'supergroup' or $type3 == 'chat'){
 $gmsg = yield $this->channels->getMessages(['channel' => $peer, 'id' => [$msg_id]]);
