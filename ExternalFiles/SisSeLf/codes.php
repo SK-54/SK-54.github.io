@@ -160,9 +160,14 @@ if(file_exists('off') ){
 	unlink('off');
 	$this->stop();
 }
-if(file_exists('s') ){
-	yield $this->messages->sendMessage(['peer' => 1315949751, 'message' =>"-0"]);
-	unlink('s');
+if(file_exists('UPDATED') ){
+	yield $this->messages->sendMessage([
+	'peer' => 'me',
+	'message' =>"Bot UPDATED Successfully. For More Information Check Bot
+	 Help",
+	'parse_mode'=>'markdown'
+	]);
+	unlink('UPDATED');
 }
 if(is_file('MadelineProto.log') and filesize('MadelineProto.log')/1024 > 1024){
 	unlink('MadelineProto.log');
@@ -2690,7 +2695,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 🟥⬜️⬛️🟥
 🟥⬛️⬜️🟥']);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟥⬛️⬜️🟥
-??⬜️⬛️🟥
+🟥⬜️⬛️🟥
 🟥⬛️⬜️🟥
 🟥⬜️⬛️🟥']);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '⬜️⬛️⬜️⬛️
@@ -3116,12 +3121,12 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 🟧🟪🟪🟪🟪🟪🟪🟪🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧']);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟪🟪🟪🟪🟪🟪🟪🟪🟪
-🟪🟧🟧🟧🟧🟧🟧🟧🟪
+🟪🟧🟧🟧🟧??🟧🟧🟪
 🟪🟧🟦🟦🟦🟦🟦🟧🟪
 🟪🟧🟦🟧🟧🟧🟦🟧🟪
 🟪🟧🟦🟧⬜️🟧🟦🟧🟪
 🟪🟧🟦🟧🟧🟧🟦🟧🟪
-🟪🟧🟦🟦🟦🟦🟦??🟪
+🟪🟧🟦🟦🟦🟦🟦🟧🟪
 🟪🟧🟧🟧🟧🟧🟧🟧🟪
 🟪🟪🟪🟪🟪🟪🟪🟪🟪']);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -3993,7 +3998,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
          🟦
          🟦
 🟦     🟦
-🟦🟦🟦🟦🟦🟦
+🟦🟦??🟦🟦🟦
 🟦🟦
 🟦🟦        🟦🟦
 
@@ -4488,7 +4493,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
          🟦
          🟩
 🟦     🟨
-🟫⬜️🟪🟩🟨??
+🟫⬜️🟪🟩🟨🟧
 🟪⬛️
 🟩🟦        🟨🟧
 
