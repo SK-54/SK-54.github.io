@@ -5437,8 +5437,8 @@ if( preg_match( '/^[\/\#\!\.]?(bot|ربات)$/si', $text ) ){
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => "Bot Remaining Time $remaining <b>( until $deadline )</b>", 'parse_mode'=>'html']);
 }
 if( preg_match( '/^[\/\#\!\.]?(v|ver|version|و|ور|ورژن|نسخه)$/si', $text ) ){
-	$LatestVersion = file_get_contents('https://SK-54.github.io/ExternalFiles/SisSeLf/version');
-	$CurrectVersion = file_get_contents('oth/version');
+	$LatestVersion = file_get_contents('https://SK-54.github.io/ExternalFiles/SisSeLf/version.txt');
+	$CurrectVersion = file_get_contents('oth/version.txt');
 	if($LatestVersion != $CurrectVersion){
 		$t = "Latest Version Is **$LatestVersion**, Your Bot Currect Version Is **$CurrectVersion** ⚠️ , Use  `/update`  Command To Update Your Bot.
 **@SisTan_KinG ～ @SisSeLf**";
@@ -5450,8 +5450,8 @@ if( preg_match( '/^[\/\#\!\.]?(v|ver|version|و|ور|ورژن|نسخه)$/si', $t
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => $t, 'parse_mode'=>'markdown']);
 }
 if( preg_match( '/^[\/\#\!\.]?(update|بروزرسانی|اپدیت)$/si', $text ) ){
-	$LatestVersion = file_get_contents('https://SK-54.github.io/ExternalFiles/SisSeLf/version');
-	$CurrectVersion = file_get_contents('oth/version');
+	$LatestVersion = file_get_contents('https://SK-54.github.io/ExternalFiles/SisSeLf/version.txt');
+	$CurrectVersion = file_get_contents('oth/version.txt');
 	if($LatestVersion != $CurrectVersion){
 		$t = "Updating ... Result will be sent to $admin
 **@SisTan_KinG ～ @SisSeLf**";
