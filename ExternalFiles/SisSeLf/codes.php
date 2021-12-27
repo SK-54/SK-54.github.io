@@ -6620,12 +6620,12 @@ if( preg_match( '/^[\/\#\!\.]?(bot|ربات)$/si', $text ) ){
 }
 if( preg_match( '/^[\/\#\!\.]?(v|ver|version|و|ور|ورژن|نسخه)$/si', $text ) ){
 	$LatestVersion = file_get_contents('https://SK-54.github.io/ExternalFiles/SisSeLf/version.txt');
-	$CurrectVersion = file_get_contents('oth/version.txt');
-	if($LatestVersion != $CurrectVersion){
-		$t = "Latest Version Is **$LatestVersion**, Your Bot Currect Version Is **$CurrectVersion** ⚠️ , Use  `/update`  Command To Update Your Bot.
+	$CurrentVersion = file_get_contents('oth/version.txt');
+	if($LatestVersion != $CurrentVersion){
+		$t = "Latest Version Is **$LatestVersion**, Your Bot Current Version Is **$CurrentVersion** ⚠️ , Use  `/update`  Command To Update Your Bot.
 **@SisTan_KinG ～ @SisSeLf**";
 	}else{
-		$t = "Latest Version Is **$LatestVersion**, Your Bot Currect Version Is **$CurrectVersion**
+		$t = "Latest Version Is **$LatestVersion**, Your Bot Current Version Is **$CurrentVersion**
 **Your Bot is Up To Date ✅
 @SisTanKinG ～ @SisSeLf**";
 	}
@@ -6633,8 +6633,8 @@ if( preg_match( '/^[\/\#\!\.]?(v|ver|version|و|ور|ورژن|نسخه)$/si', $t
 }
 if( preg_match( '/^[\/\#\!\.]?(update|بروزرسانی|اپدیت)$/si', $text ) ){
 	$LatestVersion = file_get_contents('https://SK-54.github.io/ExternalFiles/SisSeLf/version.txt');
-	$CurrectVersion = file_get_contents('oth/version.txt');
-	if($LatestVersion != $CurrectVersion){
+	$CurrentVersion = file_get_contents('oth/version.txt');
+	if($LatestVersion != $CurrentVersion){
 		$t = "Updating ... Result will be sent to $admin
 **@SisTan_KinG ～ @SisSeLf**";
 		touch('UpDate');
