@@ -102,7 +102,7 @@ public function genLoop()
 		unlink('off');
 		$this->stop();
 	}
-	return 30000;
+	return 20000;
 }
 
 public function onStart()
