@@ -53,6 +53,9 @@ if( $use_DB == true ) {
 	    'app_info'=>[
 			'api_id'=>17044113,
 			'api_hash'=>'4b36c278ad18e1944a0b5efc964a3005'
+		],
+		'db'=> [
+			'type'  => 'memory'
 		]
 	];
 }
