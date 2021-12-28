@@ -53,7 +53,7 @@ if(!is_dir('files'))
 	mkdir('files');
 //-----------------------------------\\
 if(!file_exists('data.json')){
-	file_put_contents('data.json', '{"silents":[],"answering":[],"enemies":[]}');
+	file_put_contents('data.json', '{"FirstComment":"on", "silents":[], "answering":[], "enemies":[]}');
 }
 //-----------------------------------\\
 include 'madeline.php';
@@ -81,14 +81,14 @@ public function genLoop()
 		$month_number = date('m');
 		$year_number = date('Y');
 		$day_name = date('l');
-		$Bio = is_file('bio.txt') ? file_get_contents('bio.txt') : '{time} 𝚃𝚘𝙳𝚊𝚢 𝕚𝕊 ╱{day_name}╲ ➽〣{year_number}❚{month_number}❚{day_number}〣 ↢ ～ EviLHosT.org';
+		$Bio = is_file('bio.txt') ? file_get_contents('bio.txt') : '{time} 𝚃𝚘𝙳𝚊𝚢 𝕚𝕊╱{day_name}╲➽〣{year_number}❚{month_number}❚{day_number}〣↢ @SisSeLf ～ EviLHosT.org';
 		$Bio = str_replace(['{time}','{day_number}','{month_number}','{year_number}','{day_name}'],[$time,$day_number,$month_number,$year_number,$day_name],$Bio);
 		$this->account->updateProfile([ 'last_name' => $time , 'about'=>$Bio]);
 	}
 	if(file_exists('UPDATED') ){
 		$this->messages->sendMessage([
 		'peer' => 'me',
-		'message' =>"Bot UPDATED Successfully. For More Information Check Bot Help ✅
+		'message' =>"Bot Was UPDATED To **".file_get_contents('oth/version.txt')."** Successfully. For More Information Check Bot Help ✅
 	@SisTan_KinG ～ @SisSeLf",
 		'parse_mode'=>'markdown'
 		]);
@@ -199,6 +199,13 @@ if(preg_match("/^[\/\#\!]?(part) (on|off)$/i", $text)){
 preg_match("/^[\/\#\!]?(part) (on|off)$/i", $text, $m);
 yield $this->filePutContents('part.txt', $m[2]);
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴘᴀʀᴛ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]"]);
+}
+
+if(preg_match("/^[\/\#\!]?(FirstComment) (on|off)$/i", $text)){
+	preg_match("/^[\/\#\!]?(FirstComment) (on|off)$/i", $text, $m);
+	$data['FirstComment'] = $m[2];
+	file_put_contents("data.json", json_encode($data, 448));
+	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "First Comment Now Is $m[2]"]);
 }
 //============== HashTag Mode On | Off ===============
 if(preg_match("/^[\/\#\!]?(hashtag) (on|off)$/i", $text)){
@@ -344,6 +351,9 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
 » `time ` on یا off 
 • *حالت ساعت در اسم *
+=-=-=-=-=-=-=-=-=-=-=-=-=-=
+»`FirstComment ` `on` یا `off`
+• * خاموش یا روشن کردن حالت اشغال کامنت اول *
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -3847,7 +3857,7 @@ yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧??🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
-🟧🟧🟧🟧🟧🟧🟧🟧🟧
+🟧🟧🟧??🟧🟧🟧🟧🟧
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -4137,7 +4147,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥']);
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+??🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥??
 🟥🟥🟥🟥💙💙🟥🟥🟥🟥
@@ -6647,7 +6657,7 @@ if( preg_match( '/^[\/\#\!\.]?(update|بروزرسانی|اپدیت)$/si', $text
 //================ Restart ==================
 if( preg_match( '/^[\/\#\!\.]?(restart|ریستارت)$/si', $text ) ){
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => "<b>( Bot Restarted )</b>", 'parse_mode'=>'html']);
-$this->restart();
+	$this->restart();
 }
 //================ Usage ==================
 if ($text == 'مصرف'  or $text == 'usage'){
@@ -6657,50 +6667,49 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 
 //================ User Founder ================
 if(preg_match("/^[\/\#\!]?(user) (.*)$/i", $text)){
-preg_match("/^[\/\#\!]?(user) (.*)$/i", $text, $m);
-$link = $m[2];
-yield $this->messages->editMessage(['peer' => $peer,
-'id' => $msg_id,
-'message' => "» [ᴄʟɪᴄᴋ ʜᴇʀᴇ](tg://user?id=$link) !",
-'parse_mode'=>'MarkDown']);
-
+	preg_match("/^[\/\#\!]?(user) (.*)$/i", $text, $m);
+	$link = $m[2];
+	yield $this->messages->editMessage(['peer' => $peer,
+	'id' => $msg_id,
+	'message' => "» [ᴄʟɪᴄᴋ ʜᴇʀᴇ](tg://user?id=$link) !",
+	'parse_mode'=>'MarkDown']);
 }
 //============== Upload ==============
 if(preg_match("/^[\/\#\!]?(upload) (.*)$/i", $text)){
-preg_match("/^[\/\#\!]?(upload) (.*)$/i", $text, $a);
-$oldtime = time();
-$link = $a[2];
-$ch = curl_init($link);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-curl_setopt($ch, CURLOPT_HEADER, TRUE);
-curl_setopt($ch, CURLOPT_NOBODY, TRUE);
-$data = curl_exec($ch);
-$size1 = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD); curl_close($ch);
-$size = round($size1/1024/1024,1);
-if($size <= 150){
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => '🌵 Please Wait...
-💡 FileSize : '.$size.'MB']);
-$path = parse_url($link, PHP_URL_PATH);
-$filename = basename($path);
-copy($link, "files/$filename");
-yield $this->messages->sendMedia([
-'peer' => $peer,
-'media' => [
-'_' => 'inputMediaUploadedDocument',
-'file' => "files/$filename",
-'attributes' => [['_' => 'documentAttributeFilename',
-'file_name' => "$filename"]]],
-'message' => "🔖 Name : $filename
-💠 [Your File !]($link)
-💡 Size : ".$size.'MB',
-'parse_mode' => 'Markdown'
-]);
-$t=time()-$oldtime;
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "✅ Uploaded ($t".'s)']);
-unlink("files/$filename");
-} else {
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => '⚠️ خطا : حجم فایل بیشتر 150MB است!']);
-}
+	preg_match("/^[\/\#\!]?(upload) (.*)$/i", $text, $a);
+	$oldtime = time();
+	$link = $a[2];
+	$ch = curl_init($link);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	curl_setopt($ch, CURLOPT_HEADER, TRUE);
+	curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+	$data = curl_exec($ch);
+	$size1 = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD); curl_close($ch);
+	$size = round($size1/1024/1024,1);
+	if($size <= 150){
+		yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => '🌵 Please Wait...
+		💡 FileSize : '.$size.'MB']);
+		$path = parse_url($link, PHP_URL_PATH);
+		$filename = basename($path);
+		copy($link, "files/$filename");
+		yield $this->messages->sendMedia([
+		'peer' => $peer,
+		'media' => [
+		'_' => 'inputMediaUploadedDocument',
+		'file' => "files/$filename",
+		'attributes' => [['_' => 'documentAttributeFilename',
+		'file_name' => "$filename"]]],
+		'message' => "🔖 Name : $filename
+		💠 [Your File !]($link)
+		💡 Size : ".$size.'MB',
+		'parse_mode' => 'Markdown'
+		]);
+		$t=time()-$oldtime;
+		yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "✅ Uploaded ($t".'s)']);
+		unlink("files/$filename");
+	} else {
+		yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => '⚠️ خطا : حجم فایل بیشتر 150MB است!']);
+	}
 }
 //============== Restart & Die ==============
 if ($text == '/die;') {
@@ -7629,7 +7638,7 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' => $mes ,'disable
 
 } // پایان شرط ادمین
 
-if(isset($update['message']['fwd_from']['saved_from_peer'])){
+if(isset($update['message']['fwd_from']['saved_from_peer']) && $data['FirstComment'] == 'on' ){
 	$words = [
 		'اها',
 		'جالبه',
