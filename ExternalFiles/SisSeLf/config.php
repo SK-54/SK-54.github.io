@@ -11,9 +11,6 @@ $DB_pass = '0AN3;oxK,00w'; # DataBase PassWord
 if( $use_DB == true ) {
 	if( empty($DB_name) or empty($DB_user) or empty($DB_pass) )
 		die('DataBase Information Variables Are EMPTY, Edit "oth/config.php" File.');
-}
-
-if( $use_DB == true ) {
 	$settings = [
 	    'serialization' => [
 	        'cleanup_before_serialization' => true,
@@ -33,7 +30,7 @@ if( $use_DB == true ) {
 	            'user'     => $DB_user,
 	            'password' => $DB_pass,
 	            'database' => $DB_name,
-	            'max_connections' => 5
+	            'max_connections' => 10
 	        ]
 	    ],
 	    'app_info'=>[
@@ -59,4 +56,6 @@ if( $use_DB == true ) {
 		]
 	];
 }
+
+
 ?>
