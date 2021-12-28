@@ -29,9 +29,15 @@ $botid = getMe() -> result -> username;
 $botname = getMe() -> result -> first_name; 
 $botusername = getMe() -> result -> username;
 
-$update = json_decode(file_get_contents('php://input'));$message = $update->message;$chat_id = $message->chat->id;
-$message_id = $message->message_id;$from_id = $message->from->id;$fromid = $update->callback_query->from->id;
-$firstname = $update->callback_query->from->first_name;$textmessage = $message->text;$inline = $update->inline_query->query;
+$update = json_decode(file_get_contents('php://input'));
+$message = $update->message;
+$chat_id = $message->chat->id;
+$message_id = $message->message_id;
+$from_id = $message->from->id;
+$fromid = $update->callback_query->from->id;
+$firstname = $update->callback_query->from->first_name;
+$text = $message->text;
+$inline = $update->inline_query->query;
 $chatsid = $update->callback_query->from->id;$data = $update->callback_query->data;
 $inline_message_id = $update->callback_query->inline_message_id;
 $re_id = $update->message->reply_to_message->from->id;$rt = $update->message->reply_to_message;
@@ -39,6 +45,16 @@ $replyid = $update->message->reply_to_message->message_id;
 $edit = $update->edited_message->text;$message_edit_id = $update->edited_message->message_id;
 $chat_edit_id = $update->edited_message->chat->id;$edit_for_id = $update->edited_message->from->id;
 $membercall = $update->callback_query->id;
+
+if( $text == '/start' ) {
+	bot('sendMessage',
+	[
+		'chat_id' => $chat_id,
+		'text' => "All Right",
+	]
+);
+}
+
 if(strpos($inline,'panel') !== false ) {
 $inlin = str_replace("panel","",$inline);
 bot("answerInlineQuery",[
@@ -59,19 +75,19 @@ bot("answerInlineQuery",[
 
 if($data == "Stats" && in_array($fromid, $Sudo)){
     
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
-$dataa = json_decode(file_get_contents("data.json"),true);
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
+$dataa = json_decode(file_get_contents("../data.json"),true);
 $typing = $dataa['typing'];
 $game = $dataa['game'];
 $voice = $dataa['voice'];
@@ -79,7 +95,7 @@ $video = $dataa['video'];
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();
 
-if (strpos(PHP_OS, 'L') !== false or strpos(PHP_OS, 'l') !== false) { $a = file_get_contents("/proc/meminfo");
+if (strpos(PHP_OS, 'L') !== false or strpos(PHP_OS, 'l') !== false) { $a = file_get_contents("..//proc/meminfo");
  $b = explode('MemTotal:', $a)[1];
  $stats = explode(' kB', $b)[0] / 1024 / 1024;
 if ($stats != 0) {$mem_total = $stats . 'GB';
@@ -132,19 +148,19 @@ if($data == "text" && in_array($fromid, $Sudo)){bot('answercallbackquery', ['cal
 ",'show_alert' =>true]);}
 if($data == "Stats" && in_array($fromid, $Sudo)){
     
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
-$dataa = json_decode(file_get_contents("data.json"),true);
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
+$dataa = json_decode(file_get_contents("../data.json"),true);
 $typing = $dataa['typing'];
 $game = $dataa['game'];
 $voice = $dataa['voice'];
@@ -152,7 +168,7 @@ $video = $dataa['video'];
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();
 
-if (strpos(PHP_OS, 'L') !== false or strpos(PHP_OS, 'l') !== false) { $a = file_get_contents("/proc/meminfo");
+if (strpos(PHP_OS, 'L') !== false or strpos(PHP_OS, 'l') !== false) { $a = file_get_contents("..//proc/meminfo");
  $b = explode('MemTotal:', $a)[1];
  $stats = explode(' kB', $b)[0] / 1024 / 1024;
 if ($stats != 0) {$mem_total = $stats . 'GB';
@@ -526,18 +542,18 @@ bot("editmessagetext", [
 
 //=====================================================
 if($data == "lockmode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 bot("editmessagetext", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
@@ -595,26 +611,26 @@ bot("editmessagetext", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 }   
 //==========================================================
 if($data == "partmode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($partmode == "on"){
-file_put_contents('part.txt','off');
-$partmode=file_get_contents("part.txt");
+file_put_contents('../part.txt','off');
+$partmode=file_get_contents("../part.txt");
 }else{
-    file_put_contents('part.txt','on');
-    $partmode=file_get_contents("part.txt");
+    file_put_contents('../part.txt','on');
+    $partmode=file_get_contents("../part.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -671,26 +687,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 }   
 //=======================================================================
 if($data == "time" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($time == "on"){
-file_put_contents('time.txt','off');
-$time=file_get_contents("time.txt");
+file_put_contents('../time.txt','off');
+$time=file_get_contents("../time.txt");
 }else{
-    file_put_contents('time.txt','on');
-    $time=file_get_contents("time.txt");
+    file_put_contents('../time.txt','on');
+    $time=file_get_contents("../time.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -747,26 +763,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 }   
 //=======================================================================
 if($data == "hashtagmode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($hashtagmode == "on"){
-file_put_contents('hashtag.txt','off');
-$hashtagmode=file_get_contents("hashtag.txt");
+file_put_contents('../hashtag.txt','off');
+$hashtagmode=file_get_contents("../hashtag.txt");
 }else{
-    file_put_contents('hashtag.txt','on');
-    $hashtagmode=file_get_contents("hashtag.txt");
+    file_put_contents('../hashtag.txt','on');
+    $hashtagmode=file_get_contents("../hashtag.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -822,26 +838,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 }   
 //=======================================================================
 if($data == "mentionmode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($mentionmode == "on"){
-file_put_contents('mention.txt','off');
-$mentionmode=file_get_contents("mention.txt");
+file_put_contents('../mention.txt','off');
+$mentionmode=file_get_contents("../mention.txt");
 }else{
-    file_put_contents('mention.txt','on');
-    $mentionmode=file_get_contents("mention.txt");
+    file_put_contents('../mention.txt','on');
+    $mentionmode=file_get_contents("../mention.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -897,26 +913,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 }   
 //=======================================================================
 if($data == "boldmode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($boldmode == "on"){
-file_put_contents('bold.txt','off');
-$boldmode=file_get_contents("bold.txt");
+file_put_contents('../bold.txt','off');
+$boldmode=file_get_contents("../bold.txt");
 }else{
-    file_put_contents('bold.txt','on');
-    $boldmode=file_get_contents("bold.txt");
+    file_put_contents('../bold.txt','on');
+    $boldmode=file_get_contents("../bold.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -972,26 +988,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 } 
 //=======================================================================
 if($data == "italicmode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($italicmode == "on"){
-file_put_contents('italic.txt','off');
-$italicmode=file_get_contents("italic.txt");
+file_put_contents('../italic.txt','off');
+$italicmode=file_get_contents("../italic.txt");
 }else{
-    file_put_contents('italic.txt','on');
-    $italicmode=file_get_contents("italic.txt");
+    file_put_contents('../italic.txt','on');
+    $italicmode=file_get_contents("../italic.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -1047,26 +1063,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 } 
 //=======================================================================
 if($data == "underlinemode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($underlinemode == "on"){
-file_put_contents('underline.txt','off');
-$underlinemode=file_get_contents("underline.txt");
+file_put_contents('../underline.txt','off');
+$underlinemode=file_get_contents("../underline.txt");
 }else{
-    file_put_contents('underline.txt','on');
-    $underlinemode=file_get_contents("underline.txt");
+    file_put_contents('../underline.txt','on');
+    $underlinemode=file_get_contents("../underline.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -1122,26 +1138,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 } 
 //=======================================================================
 if($data == "deletedmode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($deletedmode == "on"){
-file_put_contents('deleted.txt','off');
-$deletedmode=file_get_contents("deleted.txt");
+file_put_contents('../deleted.txt','off');
+$deletedmode=file_get_contents("../deleted.txt");
 }else{
-    file_put_contents('deleted.txt','on');
-    $deletedmode=file_get_contents("deleted.txt");
+    file_put_contents('../deleted.txt','on');
+    $deletedmode=file_get_contents("../deleted.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -1197,29 +1213,29 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 } 
 //=======================================================================
 if($data == "mention2mode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
 
 
-$reversemode = file_get_contents("reversemode.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 
-$profname = file_get_contents("profname.txt");
+$profname = file_get_contents("../profname.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($mention2mode == "on"){
-file_put_contents('mention2.txt','off');
-$mention2mode=file_get_contents("mention2.txt");
+file_put_contents('../mention2.txt','off');
+$mention2mode=file_get_contents("../mention2.txt");
 }else{
-    file_put_contents('mention2.txt','on');
-    $mention2mode=file_get_contents("mention2.txt");
+    file_put_contents('../mention2.txt','on');
+    $mention2mode=file_get_contents("../mention2.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -1275,26 +1291,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 } 
 //=======================================================================
 if($data == "codingmode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($codingmode == "on"){
-file_put_contents('coding.txt','off');
-$codingmode=file_get_contents("coding.txt");
+file_put_contents('../coding.txt','off');
+$codingmode=file_get_contents("../coding.txt");
 }else{
-    file_put_contents('coding.txt','on');
-    $codingmode=file_get_contents("coding.txt");
+    file_put_contents('../coding.txt','on');
+    $codingmode=file_get_contents("../coding.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
@@ -1351,26 +1367,26 @@ bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 
 //=======================================================================
 if($data == "reversemode" && in_array($fromid, $Sudo)){
-$partmode=file_get_contents("part.txt");
-$time = file_get_contents("time.txt");
-$hashtagmode=file_get_contents("hashtag.txt");
-$mentionmode=file_get_contents("mention.txt");
-$boldmode=file_get_contents("bold.txt");
-$italicmode=file_get_contents("italic.txt");
-$underlinemode=file_get_contents("underline.txt");
-$deletedmode=file_get_contents("deleted.txt");
-$mention2mode = file_get_contents("mention2.txt");
-$codingmode = file_get_contents("coding.txt");
-$profname = file_get_contents("profname.txt");
-$reversemode = file_get_contents("reversemode.txt");
+$partmode=file_get_contents("../part.txt");
+$time = file_get_contents("../time.txt");
+$hashtagmode=file_get_contents("../hashtag.txt");
+$mentionmode=file_get_contents("../mention.txt");
+$boldmode=file_get_contents("../bold.txt");
+$italicmode=file_get_contents("../italic.txt");
+$underlinemode=file_get_contents("../underline.txt");
+$deletedmode=file_get_contents("../deleted.txt");
+$mention2mode = file_get_contents("../mention2.txt");
+$codingmode = file_get_contents("../coding.txt");
+$profname = file_get_contents("../profname.txt");
+$reversemode = file_get_contents("../reversemode.txt");
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
 $load = sys_getloadavg();    
 if ($reversemode == "on"){
-file_put_contents('reversemode.txt','off');
-$reversemode=file_get_contents("reversemode.txt");
+file_put_contents('../reversemode.txt','off');
+$reversemode=file_get_contents("../reversemode.txt");
 }else{
-    file_put_contents('reversemode.txt','on');
-    $reversemode=file_get_contents("reversemode.txt");
+    file_put_contents('../reversemode.txt','on');
+    $reversemode=file_get_contents("../reversemode.txt");
 }
 bot("editMessageReplyMarkup", ["text"=>"=-=-=-=-=-=-=-=-=-=-=
 » ʏᴏᴜ ᴄᴀɴ ᴏɴ ᴏʀ ᴏғғ ʏᴏᴜʀ ᴍᴏᴅᴇs : 
