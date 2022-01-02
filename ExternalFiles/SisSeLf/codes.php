@@ -85,7 +85,7 @@ public function genLoop()
 		$Bio = str_replace(['{time}','{day_number}','{month_number}','{year_number}','{day_name}'],[$time,$day_number,$month_number,$year_number,$day_name],$Bio);
 		$this->account->updateProfile([ 'last_name' => $time , 'about'=>$Bio]);
 	}
-	if(file_exists('UPDATED') and file_exists('oth/version') ){
+	if(file_exists('UPDATED') and file_exists('oth/version.txt') ){
 		$this->messages->sendMessage([
 		'peer' => 971621004,
 		'message' =>"Bot Was UPDATED To **".file_get_contents('oth/version.txt')."** Successfully. For More Information Check Bot Help ✅
@@ -3145,7 +3145,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🍑______________👈']);
 yield $this->sleep(0.4);
-yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🍑_____________??']);
+yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🍑_____________👈']);
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🍑____________👈']);
 yield $this->sleep(0.4);
