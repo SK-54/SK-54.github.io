@@ -85,9 +85,9 @@ public function genLoop()
 		$Bio = str_replace(['{time}','{day_number}','{month_number}','{year_number}','{day_name}'],[$time,$day_number,$month_number,$year_number,$day_name],$Bio);
 		$this->account->updateProfile([ 'last_name' => $time , 'about'=>$Bio]);
 	}
-	if(file_exists('UPDATED') ){
+	if(file_exists('UPDATED') and file_exists('oth/version') ){
 		$this->messages->sendMessage([
-		'peer' => 'me',
+		'peer' => 971621004,
 		'message' =>"Bot Was UPDATED To **".file_get_contents('oth/version.txt')."** Successfully. For More Information Check Bot Help ✅
 	@SisTan_KinG ～ @SisSeLf",
 		'parse_mode'=>'markdown'
@@ -3145,7 +3145,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🍑______________👈']);
 yield $this->sleep(0.4);
-yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🍑_____________👈']);
+yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🍑_____________??']);
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🍑____________👈']);
 yield $this->sleep(0.4);
@@ -6095,7 +6095,7 @@ yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => "
 😏😏😏          😏         😏
 😄         😄      😄       😄
-😄           😄    😄     😄
+😄           😄    ??     😄
 🤘        🤘       🤘   🤘
 🤘🤘🤘          🤘🤘
 🙊         🙊      🙊   🙊
@@ -7673,7 +7673,7 @@ if( $type3 != 'channel' ) {
 	$this->messages->sendMessage(['peer' => $peer, 'message' => $data['answering'][$text] , 'reply_to_msg_id' => $msg_id]);
 	}
 	// Silents Check
-	if(in_array($update['message']['from_id']['user_id'], $data['silents'])&& $from_id != $admin){
+	if(@in_array($update['message']['from_id']['user_id'], $data['silents'])&& $from_id != $admin){
 		yield $this->channels->deleteMessages(['channel' => $peer, 'id' => [$msg_id], ]);
 	}
 	//Enemy Check
