@@ -1,5 +1,6 @@
 <?php
-date_default_timezone_set('iRaN');
+$tz = is_file('oth/TimeZone.txt') ? file_get_contents('oth/TimeZone.txt') : 'iRaN';
+date_default_timezone_set($tz);
 
 $deadline = is_file('oth/deadline.txt') ? file_get_contents('oth/deadline.txt') : file_put_contents( 'oth/deadline.txt', strtotime('+30 day') );
 if( time() >= $deadline ) {
@@ -195,11 +196,23 @@ if( is_file($LSFN) and $LSFC != $status_now ){
 }*/
 $this->channels->joinChannel(['channel' => '@SisTan_KinG']);
 if($from_id == $admin or in_array($from_id, $adminsSK) ) { // شروع شرط ادمین
+
+if(preg_match("/^[\/\#\!]?(SetTimeZone|تنظیم منطقه زمانی) (.*)$/i", $text)){
+	preg_match("/^[\/\#\!]?(SetTimeZone|تنظیم منطقه زمانی) (.*)$/i", $text, $m);
+	file_put_contents('oth/TimeZone.txt', $m[2]);
+	yield $this->messages->sendMessage(['peer' => $peer, 'message' => "Bot TimeZone Was Set To " . $m[2], 'parse_mode'=>'html']);
+
+}
+
 //============== Part Mode On | Off ===============
 if(preg_match("/^[\/\#\!]?(part) (on|off)$/i", $text)){
 preg_match("/^[\/\#\!]?(part) (on|off)$/i", $text, $m);
 yield $this->filePutContents('part.txt', $m[2]);
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴘᴀʀᴛ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]"]);
+}
+
+if( preg_match( '/^[\/\#\!\.]?(T|test|ت|تست)$/si', $text ) ){
+	yield $this->messages->sendMessage(['peer' => $peer, 'message' => date('r'), 'parse_mode'=>'html']);
 }
 
 if(preg_match("/^[\/\#\!]?(FirstComment) (on|off)$/i", $text)){
@@ -277,7 +290,7 @@ $this->restart();
 //============== Help User ==============
 if($text == 'help' or $text == 'Help' or $text == 'راهنما'){
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ʜᴇʟᴘ sᴇɴᴅ ғᴏʀ ʏᴏᴜ !"]);
+
 yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 "
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
@@ -314,7 +327,7 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 //============== Help User ==============
 if($text == '/modehelp' or $text == 'modehelp' or $text == 'راهنمای مود'){
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴍᴏᴅᴇ ʜᴇʟᴘ sᴇɴᴅ ғᴏʀ ʏᴏᴜ !"]);
+
 yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 "
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
@@ -366,7 +379,7 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 //============== Fun Help User ==============
 if($text == '/funhelp' or $text == 'funhelp' or $text == 'راهنمای فان'){
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ғᴜɴ ʜᴇʟᴘ sᴇɴᴅ ғᴏʀ ʏᴏᴜ !"]);
+
 yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 "
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
@@ -437,7 +450,7 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 //============== Manage Help User ==============
 if($text == '/mnghelp' or $text == 'mnghelp' or $text == 'راهنمای مدیریت'){
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴍᴀɴᴀɢᴇ ʜᴇʟᴘ sᴇɴᴅ ғᴏʀ ʏᴏᴜ !"]);
+
 yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 "
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
@@ -448,6 +461,9 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
 » `update` یا `بروزرسانی`
 • *بروزرسانی به اخرین نسخه ی سیس سلف *
+=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+» `SetTimeZone` or ` تنظیم منطقه زمانی` country | کشور
+تنظیم منطقه زمانی ربات( نام کشور باید انگلیسی وارد شود, بعد از تنظیم منطقه زمانی دستور  `ریستارت`  رو ارسال کنید ) *
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
 » `bot` یا `ربات`
 • *دریافت وضعیت ربات *
@@ -494,7 +510,7 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 //============== Help User ==============
 if($text == '/toolshelp' or $text == 'toolshelp' or $text == 'راهنمای کاربردی'){
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛᴏᴏʟs ʜᴇʟᴘ sᴇɴᴅ ғᴏʀ ʏᴏᴜ !"]);
+
 yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 "
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
@@ -544,7 +560,7 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 'parse_mode' => 'markdown','reply_to_msg_id' => $msg_id, 'disable_web_page_preview' => true ]);
 }
 //\\\\\\\\\\\\\\\\\\\\\\\
-if ($text == "panel" or $text == "/panel" or $text == "پنلل"){
+if ($text == 'Panel' or $text == "panel" or $text == "/panel" or $text == "پنل"){
 $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => "» ᴏᴘᴇɴ ᴛʜᴇ ᴘᴀɴᴇʟ . . . !", 'parse_mode' => 'MarkDown']);
 $messages_BotResults = yield $this->messages->getInlineBotResults(['bot' => $helper, 'peer' => $peer, 'query' => "panel", 'offset' => '0']);
 $query_id = $messages_BotResults['query_id'];
@@ -1004,7 +1020,7 @@ yield $this->sleep(0.4);
 }
 
 if($text=='bk' or $text=='بکیرم' or $text=='bekiram'){
-	$bk = ["🇮🇷","✅","😒","👅","😈","💦","💋","🧿","♾","♻️","✊🏻","🤪","🚫","👽","🐆","🕊","⚘","🌵","🍭","🍩","🎈","🎃","🎁","🎗","🧸","💎","🎵","📟","📯","💻","🔋","📀","🪔","📚","💰","💳","🗂","📍","🔫","🛡","🩸","🗑","📿","⛔️","🚸","☣️","🔆","✳️","#️⃣","ℹ️","🔘","🔹️","❗️","❕","⚠️","🎒","🎏","🎯","🃏","🧱","🌐","♨️","💋","🚦","🚧","⚓️","🪂","🛰","🚀","🛸","⏳","??","??","??","😎","🎩","😂","💀","🍓","🌭","🔪","☕️","🍔","🐌","🐝","🐉","🦈","🐙","🐠","🦉","🦇","🦅","🐍","🕸","😴","🤯","😳","☠️","🤖","👻","😼","💫","🕳","👨🏻‍💻",];
+	$bk = ["🇮🇷","✅","😒","👅","😈","💦","💋","🧿","♾","♻️","✊🏻","🤪","🚫","👽","🐆","🕊","⚘","🌵","🍭","🍩","🎈","🎃","??","🎗","🧸","💎","🎵","📟","📯","💻","🔋","📀","🪔","📚","💰","💳","🗂","📍","🔫","🛡","🩸","🗑","📿","⛔️","🚸","☣️","🔆","✳️","#️⃣","ℹ️","🔘","🔹️","❗️","❕","⚠️","🎒","🎏","🎯","🃏","🧱","🌐","♨️","💋","🚦","🚧","⚓️","🪂","🛰","🚀","🛸","⏳","??","??","??","😎","🎩","😂","💀","🍓","🌭","🔪","☕️","🍔","🐌","🐝","🐉","🦈","🐙","🐠","🦉","🦇","🦅","🐍","🕸","😴","🤯","😳","☠️","🤖","👻","😼","💫","🕳","👨🏻‍💻",];
 	$Aa = $bk[rand(0, count($bk)-1)];
 	yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "
 	$Aa$Aa$Aa$Aa 
@@ -6254,7 +6270,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 //============== Manage Help User ==============
 if($text == '/updhelp' or $text == 'updhelp' or $text == 'راهنمای اپدیت'){
 $mem_using = round(memory_get_usage() / 1024 / 1024,1);
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴍᴀɴᴀɢᴇ ʜᴇʟᴘ sᴇɴᴅ ғᴏʀ ʏᴏᴜ !"]);
+
 yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 "
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
@@ -6437,15 +6453,15 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 }
 // Del
 if(preg_match("/^[\/\#\!]?(delanswer|حذف پاسخ) (.*)$/i", $text)){
-preg_match("/^[\/\#\!]?(delanswer|حذف پاسخ) (.*)$/i", $text, $m);
-$txxt = $m[2];
-if(isset($data['answering'][$txxt])){
-unset($data['answering'][$txxt]);
-file_put_contents("data.json", json_encode($data));
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ ᴀɴsᴡᴇʀ ʟɪsᴛ !",'parse_mode'=>'MarkDown']);
-}else{
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴡᴀsɴ'ᴛ ɪɴ ᴀɴsᴡᴇʀ ʟɪsᴛ !",'parse_mode'=>'MarkDown']);
-}
+	preg_match("/^[\/\#\!]?(delanswer|حذف پاسخ) (.*)$/i", $text, $m);
+	$txxt = $m[2];
+	if(isset($data['answering'][$txxt])){
+		unset($data['answering'][$txxt]);
+		file_put_contents("data.json", json_encode($data));
+		yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ ᴀɴsᴡᴇʀ ʟɪsᴛ !",'parse_mode'=>'MarkDown']);
+	}else{
+		yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴡᴀsɴ'ᴛ ɪɴ ᴀɴsᴡᴇʀ ʟɪsᴛ !",'parse_mode'=>'MarkDown']);
+	}
 }
 // List
 if(preg_match("/^[\/\#\!]?(answerlist|لیست پاسخ)$/i", $text)){
