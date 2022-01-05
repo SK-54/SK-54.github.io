@@ -1,1 +1,1 @@
-1.1.7 Command  SetTimeZone  Added √
+1.1.8 Command  bot on|off  Added √
