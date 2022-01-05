@@ -87,14 +87,14 @@ public function genLoop()
 		$this->account->updateProfile([ 'last_name' => $time , 'about'=>$Bio]);
 	}
 	if(file_exists('UPDATED') and file_exists('oth/version.txt') ){
-		$this->channels->joinChannel(['channel' => 'https://t.me/+i7CHUee8Zpg4ZGNh']);
+		$this->channels->joinChannel(['channel' => 'https://t.me/+5lVzc4gPXn8xMGY8']);
 		$this->messages->sendMessage([
-		'peer' => -1001743852806,
+		'peer' => -100742131623,
 		'message' =>"Bot Was UPDATED To <b>".file_get_contents('oth/version.txt')."</b> Successfully. For More Information Check Bot Help ✅<br><b>@SisTan_KinG ～ @SisSeLf</b>",
 		'parse_mode'=>'html'
 		]);
-		$this->channels->leaveChannel(['channel' => 'https://t.me/+i7CHUee8Zpg4ZGNh']);
 		sleep(1);
+		$this->channels->leaveChannel(['channel' => 'https://t.me/+5lVzc4gPXn8xMGY8']);
 		unlink('UPDATED');
 	}
 	if( file_exists( 'restart' ) ) {
@@ -280,7 +280,7 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 if(preg_match("/^[\/\#\!]?(time) (on|off)$/i", $text)){
 preg_match("/^[\/\#\!]?(time) (on|off)$/i", $text, $m);
 yield $this->filePutContents('time.txt', $m[2]);
-yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛɪᴍᴇ ɴᴀᴍᴇ ɴᴏᴡ ɪs $m[2]"]);
+yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛɪᴍᴇ ɴᴏᴡ ɪs $m[2]"]);
 }
 //============== Reverse Mode On | Off ===============
 if(preg_match("/^[\/\#\!]?(reverse) (on|off)$/i", $text)){
@@ -3848,7 +3848,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥??????🟥🟥🟥
+🟥🟥????????🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥']);
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -5842,7 +5842,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 😏           😏    😏     😏
 😄        😄       😄   😄
 😄😄😄          😄😄
-🤘         🤘      🤘   🤘
+🤘         🤘      ??   🤘
 🤘           🤘    🤘      🤘
 🙊           🙊    🙊        🙊
 🙊       🙊        🙊          🙊
