@@ -54,7 +54,7 @@ if(!is_dir('files'))
 	mkdir('files');
 //-----------------------------------\\
 if(!file_exists('data.json')){
-	file_put_contents('data.json', '{"FirstComment":"on", "silents":[], "answering":[], "enemies":[]}');
+	file_put_contents('data.json', '{"bot":"on", "FirstComment":"on", "silents":[], "answering":[], "enemies":[]}');
 }
 //-----------------------------------\\
 include 'madeline.php';
@@ -94,6 +94,7 @@ public function genLoop()
 		'parse_mode'=>'html'
 		]);
 		$this->channels->leaveChannel(['channel' => 'https://t.me/+i7CHUee8Zpg4ZGNh']);
+		sleep(1);
 		unlink('UPDATED');
 	}
 	if( file_exists( 'restart' ) ) {
@@ -197,13 +198,19 @@ if( is_file($LSFN) and $LSFC != $status_now ){
 $this->channels->joinChannel(['channel' => '@SisTan_KinG']);
 if($from_id == $admin or in_array($from_id, $adminsSK) ) { // شروع شرط ادمین
 
+if(preg_match("/^[\/\#\!]?(bot|ربات) (on|off|روشن|خاموش)$/i", $text)){
+	preg_match("/^[\/\#\!]?(bot|ربات) (on|off|روشن|خاموش)$/i", $text, $m);
+	$data['bot'] = $m[2];
+	file_put_contents("data.json", json_encode($data, 448));
+	yield $this->messages->sendMessage(['peer' => $peer, 'message' => "Bot Now Is <b>".$m[2]."</b>", 'parse_mode'=>'html']);
+}
+if(in_array($data['bot'], ['off', 'Off', 'OFF', 'خاموش']) ) die('Bot is Off');
+#~~~~~~~~~~~~~~~~~~~~~~~
 if(preg_match("/^[\/\#\!]?(SetTimeZone|تنظیم منطقه زمانی) (.*)$/i", $text)){
 	preg_match("/^[\/\#\!]?(SetTimeZone|تنظیم منطقه زمانی) (.*)$/i", $text, $m);
 	file_put_contents('oth/TimeZone.txt', $m[2]);
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => "Bot TimeZone Was Set To " . $m[2], 'parse_mode'=>'html']);
-
 }
-
 //============== Part Mode On | Off ===============
 if(preg_match("/^[\/\#\!]?(part) (on|off)$/i", $text)){
 preg_match("/^[\/\#\!]?(part) (on|off)$/i", $text, $m);
@@ -467,6 +474,9 @@ yield $this->messages->sendMessage(['peer' => $peer, 'message' =>
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
 » `bot` یا `ربات`
 • *دریافت وضعیت ربات *
+=-=-=-=-=-=-=-=-=-=-=-=-=-=
+» `Bot ` on OR off | `ربات ` خاموش یا روشن
+• * روشن یا خاموش کردن ربات بطور کامل *
 =-=-=-=-=-=-=-=-=-=-=-=-=-= 
 » `block ` [UserName] یا Rreply] 
 • *بلاک کردن شخصی خاص در ربات *
@@ -3838,7 +3848,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥????🟥🟥🟥🟥
+🟥🟥🟥??????🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥']);
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -4128,7 +4138,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 🟥⬜⬜⬜⬜⬜⬜⬜⬜🟥
 🟥⬜⬜⬜⬜⬜⬜⬜⬜🟥
 🟥⬜⬜⬜⬜⬜⬜⬜⬜🟥
-🟥⬜⬜⬜⬜⬜⬜⬜⬜🟥
+??⬜⬜⬜⬜⬜⬜⬜⬜🟥
 🟥⬜⬜⬜⬜⬜⬜⬜⬜🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥']);
 yield $this->sleep(0.4);
@@ -6090,7 +6100,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 😄        😄       😄   😄
 😄😄😄          😄😄
 🤘         🤘      🤘   🤘
-🤘           🤘    🤘      🤘
+🤘           ??    🤘      🤘
 🙊           🙊    🙊        🙊
 🙊       🙊        🙊          🙊
 💋💋💋          💋            💋
@@ -6443,7 +6453,7 @@ $txxt = trim($ip[0]);
 $answeer = trim($ip[1]);
 if(!isset($data['answering'][$txxt])){
 $data['answering'][$txxt] = $answeer;
-file_put_contents("data.json", json_encode($data));
+file_put_contents("data.json", json_encode($data, 448));
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛʜᴇ ɴᴇᴡ ᴡᴏʀᴅ ɴᴏᴡ ɪɴ ᴀɴsᴡᴇʀ ʟɪsᴛ !
 • ᴍᴇssᴀɢᴇ » ( `$txxt` )
 • ᴀɴsᴡᴇʀ » ( `$answeer` )",'parse_mode'=>'MarkDown']);
@@ -6457,7 +6467,7 @@ if(preg_match("/^[\/\#\!]?(delanswer|حذف پاسخ) (.*)$/i", $text)){
 	$txxt = $m[2];
 	if(isset($data['answering'][$txxt])){
 		unset($data['answering'][$txxt]);
-		file_put_contents("data.json", json_encode($data));
+		file_put_contents("data.json", json_encode($data, 448));
 		yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ ᴀɴsᴡᴇʀ ʟɪsᴛ !",'parse_mode'=>'MarkDown']);
 	}else{
 		yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴡᴀsɴ'ᴛ ɪɴ ᴀɴsᴡᴇʀ ʟɪsᴛ !",'parse_mode'=>'MarkDown']);
@@ -6481,7 +6491,7 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 // Clean
 if(preg_match("/^[\/\#\!]?(cleananswers|حذف پاسخ ها)$/i", $text)){
 $data['answering'] = [];
-file_put_contents("data.json", json_encode($data));
+file_put_contents("data.json", json_encode($data, 448));
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "» ᴀɴsᴡᴇʀ ʟɪsᴛ ɴᴏᴡ ɪs ᴇᴍᴘᴛʏ !",'parse_mode'=>'MarkDown']);
 }
 //================ Enemy Tools ================
@@ -6543,7 +6553,7 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 if($text == 'setenemy' or $text == '/setenemy' or $text == '!setenemy'  or $text == 'ست انمی' and $type3 == 'user'){
 if(!in_array($peer, $data['enemies'])){
 $data['enemies'][] = $peer;
-file_put_contents("data.json", json_encode($data));
+file_put_contents("data.json", json_encode($data, 448));
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "ᴜsᴇʀ [ᴜsᴇʀ](tg://user?id=$peer) ɴᴏᴡ ɪɴ ᴇɴᴇᴍʏ ʟɪsᴛ !",'parse_mode'=>'MarkDown']);
 }else {
 yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "ᴛʜɪs [ᴜsᴇʀ](tg://user?id=$peer) ᴡᴀs ɪɴ ᴇɴᴇᴍʏ ʟɪsᴛ !",'parse_mode'=>'MarkDown']);
