@@ -1,1 +1,1 @@
-1.1.8 Command  bot on|off  Added √
+1.1.9 Auto Restart added
