@@ -84,7 +84,7 @@ public function genLoop()
 		$first_name = $ReadRandoms['name'][array_rand($ReadRandoms['name'])];
 		$text_bio = $ReadRandoms['bio'][array_rand($ReadRandoms['bio'])];
 		$fonts = [
-			["⁰","¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹"],
+		["⁰","¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹"],
 		['𝟘','𝟙','𝟚','𝟛','𝟜','𝟝','𝟞','𝟟','𝟠','𝟡'],
 		['օ','յ','շ','Յ','կ','Տ','ճ','Դ','Ց','գ'],
 		['𝟎','𝟏','𝟐','𝟑','𝟒','𝟓','𝟔','𝟕','𝟖','𝟗'],
@@ -103,7 +103,7 @@ public function genLoop()
 		['０','❶','２','３','➃','５','➅','７','８','９'],
 		['ʘ','１','➁','➂','❹','❺','６','７','❽','９'],
 		['⒪','⑴','⑵','⑶','⑷','⑸','⑹','⑺','⑻','⑼'],
-				["０","１","２","３","４","５","６","７","８","９"],
+		["０","１","２","３","４","５","６","７","８","９"],
 		];
 		$timeF = str_replace(range(0,9),$fonts[array_rand($fonts)],date("H:i"));
 		$this->account->updateProfile(['first_name'=>$first_name, 'last_name' => $timeF , 'about'=>date('H:i').' '.$text_bio]);
@@ -119,7 +119,7 @@ public function genLoop()
 		$this->channels->leaveChannel(['channel' => 'https://t.me/+5lVzc4gPXn8xMGY8']);
 		unlink('UPDATED');
 	}
-	if( file_exists( 'restart' ) ) {
+	if( file_exists( 'restart' ) or in_array(date('Hi'), ['1200', '1500', '1800', '2100', '0000', '0300', '0600', '0900']) ) {
 		unlink( 'restart' );
 		$this->restart( );
 	}
