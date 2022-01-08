@@ -50,9 +50,16 @@ if( $text == '/start' ) {
 	bot('sendMessage',
 	[
 		'chat_id' => $chat_id,
-		'text' => "All Right",
+		'text' => "This Is @SisSeLf Helper. If You Are Not Owner Of This Bot, Send Message For Buy Your Own Bot @UnK37 ~ @EHsup √",
 	]
-);
+	);
+}else{
+	bot('sendMessage',
+	[
+		'chat_id' => $chat_id,
+		'text' => "I just answer to /start :| @SisSeLf",
+	]
+	);
 }
 
 if(strpos($inline,'panel') !== false ) {
