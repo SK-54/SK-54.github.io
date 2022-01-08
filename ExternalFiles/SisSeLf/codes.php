@@ -64,6 +64,7 @@ use \danog\MadelineProto\API;
 use \danog\Loop\Generic\GenericLoop;
 use \danog\MadelineProto\EventHandler;
 //-----------------------------------\\
+
 class XHandler extends EventHandler
 {
 const Report = 'channel';
@@ -87,16 +88,16 @@ public function genLoop()
 		$this->account->updateProfile([ 'last_name' => $time , 'about'=>$Bio]);
 	}
 	if(file_exists('UPDATED') and file_exists('oth/version.txt') ){
-		$this->channels->joinChannel(['channel' => 'https://t.me/+5lVzc4gPXn8xMGY8']);
+		#$GroupLink = 'https://t.me/+5lVzc4gPXn8xMGY8';
+		#$this->channels->joinChannel(['channel' => $GroupLink]);
 		$this->messages->sendMessage([
-		'peer' => -100742131623,
-		'message' =>"Bot Was UPDATED To <b>".file_get_contents('oth/version.txt')."</b> Successfully. For More Information Check Bot Help ✅<br><b>@SisTan_KinG ～ @SisSeLf</b>",
+		'peer' => 971621004 ,
+		'message' => date('r')."<br>Bot Was UPDATED To <b>".file_get_contents('oth/version.txt')."</b> Successfully. ✅<br><b>@SisTan_KinG ～ @SisSeLf</b>",
 		'parse_mode'=>'html'
 		]);
-		sleep(1);
-		$this->channels->leaveChannel(['channel' => 'https://t.me/+5lVzc4gPXn8xMGY8']);
 		unlink('UPDATED');
 	}
+	
 	if( file_exists( 'restart' ) or in_array(date('Hi'),['1200', '1500', '1800', '2100', '0000', '0300', '0600', '0900']) ) {
 		@unlink( 'restart' );
 		$this->restart( );
@@ -3848,7 +3849,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥????????🟥🟥🟥
+??🟥????????🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥']);
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -6664,7 +6665,7 @@ if( preg_match( '/^[\/\#\!\.]?(v|ver|version|و|ور|ورژن|نسخه)$/si', $t
 	}else{
 		$t = "Latest Version Is **$LatestVersion**, Your Bot Current Version Is **$CurrentVersion**
 **Your Bot is Up To Date ✅
-@SisTanKinG ～ @SisSeLf**";
+@SisTan_KinG ～ @SisSeLf**";
 	}
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => $t, 'parse_mode'=>'markdown']);
 }
@@ -6677,7 +6678,7 @@ if( preg_match( '/^[\/\#\!\.]?(update|بروزرسانی|اپدیت)$/si', $text
 		touch('UpDate');
 	}else{
 		$t = "**Your Bot is Up To Date ✅
-@SisTanKinG ～ @SisSeLf**";
+@SisTan_KinG ～ @SisSeLf**";
 	}
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => $t, 'parse_mode'=>'markdown']);
 }
@@ -6816,17 +6817,18 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 }}
 //============== Mention 2 Mode ==============
 if($mention2mode == "on"){
-if($update){
-if($type3 == 'supergroup' or $type3 == 'chat'){
-$gmsg = yield $this->channels->getMessages(['channel' => $peer, 'id' => [$msg_id]]);
-$messag = $gmsg['messages'][0]['reply_to_msg_id'];
-$g = yield $this->channels->getMessages(['channel' => $peer, 'id' => [$messag]]);
-$id = $g['messages'][0]['from_id'];
+	if($update){
+		if($type3 == 'supergroup' or $type3 == 'chat'){
+			$gmsg = yield $this->channels->getMessages(['channel' => $peer, 'id' => [$msg_id]]);
+			$messag = $gmsg['messages'][0]['reply_to_msg_id'];
+			$g = yield $this->channels->getMessages(['channel' => $peer, 'id' => [$messag]]);
+			$id = $g['messages'][0]['from_id'];
+		}
+		if( strlen($text) < 150){
+			yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => "[$text](tg://user?id=$id)",'parse_mode'=>'MarkDown']);
+		}
+	}
 }
-if( strlen($text) < 150){
-yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => "[$text](tg://user?id=$id)",'parse_mode'=>'MarkDown']);
-}
-}}
 //============== Coding Mode ==============
 if($codingmode == "on"){
 if($update){
@@ -7185,8 +7187,8 @@ $Font_21= ['ᑫ','ᗯ','ᗴ','ᖇ','Ꭲ','Ꭹ','ᑌ','Ꮖ','ᝪ','ᑭ','ᗩ','�
 $Font_22= ['ℚ','Ꮤ','℮','ℜ','Ƭ','Ꮍ','Ʋ','Ꮠ','Ꮎ','⅌','Ꭿ','Ꮥ','ⅅ','ℱ','Ꮹ','ℋ','ℐ','Ӄ','ℒ','ℤ','ℵ','ℭ','Ꮙ','Ᏸ','ℕ','ℳ'];
 $Font_23= ['Ԛ','ᚠ','ᛊ','ᚱ','ᛠ','ᚴ','ᛘ','ᛨ','θ','ᚹ','ᚣ','ᛢ','ᚦ','ᚫ','ᛩ','ᚻ','ᛇ','ᛕ','ᚳ','Z','ᚷ','ᛈ','ᛉ','ᛒ','ᚺ','ᚥ'];
 $Font_24= ['𝓠','𝓦','𝓔','𝓡','𝓣','𝓨','𝓤','𝓘','𝓞','𝓟','𝓐','𝓢','𝓓','𝓕','𝓖','𝓗','𝓙','𝓚','𝓛','𝓩','𝓧','𝓒','𝓥','𝓑','𝓝','𝓜'];
-$Font_25= ['𝒬','𝒲','ℰ','ℛ','𝒯','𝒴','𝒰','ℐ','𝒪','𝒫','𝒜','𝒮','𝒟','ℱ','𝒢','ℋ','𝒥','𝒦','ℒ','𝒵','𝒳','𝒞','𝒱','ℬ','𝒩','ℳ'];
-$Font_26= ['ℚ','??','𝔼','ℝ','𝕋','𝕐','𝕌','𝕀','𝕆','ℙ','𝔸','𝕊','𝔻','𝔽','𝔾','ℍ','𝕁','𝕂','𝕃','ℤ','𝕏','ℂ','𝕍','𝔹','ℕ','𝕄'];
+$Font_25= ['𝒬','𝒲','ℰ','ℛ','𝒯','𝒴','𝒰','ℐ','𝒪','𝒫','𝒜','𝒮','𝒟','ℱ','𝒢','ℋ','??','𝒦','ℒ','𝒵','𝒳','𝒞','𝒱','ℬ','𝒩','ℳ'];
+$Font_26= ['ℚ','??','𝔼','ℝ','𝕋','𝕐','𝕌','𝕀','𝕆','ℙ','𝔸','𝕊','𝔻','??','𝔾','ℍ','𝕁','𝕂','𝕃','ℤ','𝕏','ℂ','𝕍','𝔹','ℕ','𝕄'];
 $Font_27= ['Ｑ','Ｗ','Ｅ','Ｒ','Ｔ','Ｙ','Ｕ','Ｉ','Ｏ','Ｐ','Ａ','Ｓ','Ｄ','Ｆ','Ｇ','Ｈ','Ｊ','Ｋ','Ｌ','Ｚ','Ｘ','Ｃ','Ｖ','Ｂ','Ｎ','Ｍ'];
 $Font_28= ['ǫ','ᴡ','ᴇ','ʀ','ᴛ','ʏ','ᴜ','ɪ','ᴏ','ᴘ','ᴀ','s','ᴅ','ғ','ɢ','ʜ','ᴊ','ᴋ','ʟ','ᴢ','x','ᴄ','ᴠ','ʙ','ɴ','ᴍ'];
 $Font_29= ['𝚀','𝚆','𝙴','𝚁','𝚃','𝚈','𝚄','𝙸','𝙾','𝙿','𝙰','𝚂','𝙳','𝙵','𝙶','𝙷','𝙹','𝙺','𝙻','𝚉','𝚇','𝙲','𝚅','𝙱','𝙽','𝙼'];
