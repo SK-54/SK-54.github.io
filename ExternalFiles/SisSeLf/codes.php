@@ -135,6 +135,7 @@ if (time() - $update['message']['date'] > 2) {
 	return;
 }
 try {
+	$message = isset($update['message']) ? $update['message']:'';
 $text      = $update['message']['message']?? null;
 $msg_id    = $update['message']['id']?? 0;
 $from_id   = $update['message']['from_id']['user_id']?? 0;
@@ -5837,7 +5838,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
 yield $this->sleep(0.4);
 yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => "
 👽👽👽          👽         👽
-😍         😍      😍       😍
+😍         ??      😍       😍
 😎           😎    😎     😎
 🤬        🤬       🤬   🤬
 😄😄😄          🤓 🤓
