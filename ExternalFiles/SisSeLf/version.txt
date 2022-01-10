@@ -1,1 +1,1 @@
-1.10 AutoSeen Added 1
+1.11 BASE CHANGE. config.php Also Edited
