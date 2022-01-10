@@ -124,10 +124,10 @@ return Amp\File\put($fileName, $contents);
 public function onUpdateSomethingElse($update){
 yield $this->onUpdateNewMessage($update);
 }
-public function onUpdateNewChannelMessage($update)
+/*public function onUpdateNewChannelMessage($update)
 {
 yield $this->onUpdateNewMessage($update);
-}
+}*/
 
 public function onUpdateNewMessage($update)
 {
@@ -229,6 +229,11 @@ yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' =>
 
 if( preg_match( '/^[\/\#\!\.]?(T|test|ت|تست)$/si', $text ) ){
 	yield $this->messages->sendMessage(['peer' => $peer, 'message' => date('r'), 'parse_mode'=>'html']);
+}
+
+if( preg_match( '/^[\/\#\!\.]?(offf|خامووش)$/si', $text ) ){
+	touch('off');
+	yield $this->messages->sendMessage(['peer' => $peer, 'message' => '<b>Bot Will Turn OFFF Very Soon</b>', 'parse_mode'=>'html']);
 }
 
 if(preg_match("/^[\/\#\!]?(FirstComment) (on|off)$/i", $text)){
