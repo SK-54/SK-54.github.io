@@ -15,15 +15,34 @@ if (time() >= $deadline) {
 		)
 	);
 }
-
+$sessionFN = 'session.madeline.safe.php'; # session FileName √
+if(is_file($sessionFN) ) {
+	if(!is_dir("FirsTsession") )
+		mkdir("FirsTsession");
+	if(filesize($sessionFN)/1024 > 600 and
+	!file_exists("FirsTsession/$sessionFN") )
+		copy($sessionFN , "FirsTsession/$sessionFN");
+	/*if(file_exists("session.madeline.safe.php") && filesize("session.madeline.safe.php")/1024 > 2048){
+		unlink("session.sk");
+		unlink("session.sk.lock");
+		unlink("session.sk.ipcState.php");
+		unlink("session.sk.ipcState.php.lock");
+		unlink("session.sk.lightState.php");
+		unlink("session.sk.lightState.php.lock");
+		unlink("session.madeline.safe.php");
+		unlink("session.madeline.safe.php.lock");
+		copy("FirsTsession/session.madeline.safe.php","session.madeline.safe.php");
+		#file_get_contents('http://'.$_SERVER['SERVER_NAME'].$_SERVER['PHP_SELF']);
+	}*/
+}
 //-----------------------------------\\
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 ini_set("display_startup_errors", 1);
 //-----------------------------------\\
 if ( !file_exists("madeline.php") or 
-	filesize('madeline.php') < 8873 or
-	filesize('madeline.php') > 8873 ) {
+filesize('madeline.php') < 8873 or
+filesize('madeline.php') > 8873 ) {
 	copy("https://phar.madelineproto.xyz/madeline.php", "madeline.php");
 }
 //-----------------------------------\\
@@ -8692,7 +8711,7 @@ SaLam
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+🟥🟥🟥??🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥??
 🟥🟥🟥🟥💙💙🟥🟥🟥🟥
 🟥🟥🟥🟥💙💙🟥🟥🟥🟥
