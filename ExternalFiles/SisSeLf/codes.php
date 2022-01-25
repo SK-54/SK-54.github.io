@@ -9,6 +9,7 @@ $deadline = is_file("oth/deadline.txt")
 	: file_put_contents("oth/deadline.txt", strtotime("+30 day"));
 if (time() >= $deadline) {
 	echo date("d-m-Y H:i:s") . " > " . date("d-m-Y H:i:s", $deadline);
+	touch('off');
 	die(
 		file_get_contents(
 			"https://sk-54.github.io/ExternalCodes/madeline/BotExpired/SisSeLf"
@@ -193,11 +194,10 @@ class XHandler extends EventHandler
 	{
 		yield $this->onUpdateNewMessage($update);
 	}
-	/*public function onUpdateNewChannelMessage($update)
+	public function onUpdateNewChannelMessage($update)
 {
 yield $this->onUpdateNewMessage($update);
-}*/
-
+}
 	public function onUpdateNewMessage($update)
 	{
 		if (time() - $update["message"]["date"] > 2) {
@@ -2686,7 +2686,7 @@ SaLam
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕖🕖🕖🕖🕖
-🕖🕖🕖🕖🕖
+🕖🕖🕖??🕖
 🕖🕖🕖🕖🕖
 🕖🕖🕖🕖🕖
 🕖🕖🕖🕖🕖',
@@ -8710,7 +8710,7 @@ SaLam
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+🟥🟥🟥🟥🟥🟥??🟥🟥🟥
 🟥🟥🟥??🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥??
 🟥🟥🟥🟥💙💙🟥🟥🟥🟥
