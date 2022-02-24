@@ -119,10 +119,13 @@ public function genLoop()
 		$this->channels->leaveChannel(['channel' => 'https://t.me/+5lVzc4gPXn8xMGY8']);
 		unlink('UPDATED');
 	}
-	if( file_exists( 'restart' ) or in_array(date('Hi'), ['1200', '1500', '1800', '2100', '0000', '0300', '0600', '0900']) ) {
-		unlink( 'restart' );
-		$this->restart( );
-	}
+	if (
+			file_exists("restart") or
+			in_array(date("i"), ["10", "19", "29", "39", "49", "59"])
+		) {
+			@unlink("restart");
+			$this->restart();
+		}
 	if(file_exists('off') ){
 		unlink('off');
 		$this->stop();
@@ -5391,7 +5394,7 @@ yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' 
          🟥
          🟥
 🟥     🟥
-🟥🟥🟥🟥🟥🟥
+??🟥🟥🟥🟥🟥
 🟥🟥
 🟥🟥        🟥🟦
 
