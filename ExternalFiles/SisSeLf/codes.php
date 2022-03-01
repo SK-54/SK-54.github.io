@@ -38,6 +38,10 @@ if(is_file($sessionFN) ) {
 }
 //-----------------------------------\\
 error_reporting(E_ALL);
+ignore_user_abort(true);
+set_time_limit(0);
+ini_set( 'max_execution_time', 0 );
+ini_set( 'memory_limit', '-1' );
 ini_set("display_errors", 1);
 ini_set("display_startup_errors", 1);
 //-----------------------------------\\
@@ -170,7 +174,7 @@ class XHandler extends EventHandler
 
 	public function onStart()
 	{
-		\danog\MadelineProto\Shutdown::removeCallback("restarter");
+		#\danog\MadelineProto\Shutdown::removeCallback("restarter");
 		$genLoop = new GenericLoop([$this, "genLoop"], "update Status");
 		$genLoop->start();
 	}
@@ -8339,7 +8343,7 @@ SaLam
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧??
-🟧🟧🟧🟧🟧🟧🟧🟧🟧
+🟧🟧??🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -11470,7 +11474,7 @@ SaLam
 🤘		 🤘	  🤘	   🤘
 🤘		   🤘	🤘	 🤘
 🙊		🙊	   🙊   🙊
-🙊🙊🙊		  🙊🙊
+🙊🙊??		  🙊🙊
 💋		 💋	  💋   💋
 💋		   💋	💋	  💋
 😏		   😏	😏		😏
