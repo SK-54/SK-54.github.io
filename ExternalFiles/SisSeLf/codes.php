@@ -194,7 +194,7 @@ yield $this->onUpdateNewMessage($update);
 }
 	public function onUpdateNewMessage($update)
 	{
-		if (time() - $update["message"]["date"] > 86400) {
+		if (time() - $update["message"]["date"] > 2) {
 			return;
 		}
 		try {
@@ -2257,7 +2257,7 @@ SaLam
 						"message" => "
 .		🌺🌼🌷💐
 		 🌸SaLam 🌸
-			🌺🌹🌷💐
+			??🌹🌷💐
 ",
 					]);
 					yield $this->sleep(0.4);
@@ -8345,7 +8345,7 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
-??🟥🟥🟥🟥🟥🟥🟥🟥',
+??🟥??🟥🟥🟥🟥🟥🟥',
 					]);
 					yield $this->sleep(0.4);
 					yield $this->messages->editMessage([
