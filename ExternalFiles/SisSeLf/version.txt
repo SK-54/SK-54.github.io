@@ -1,1 +1,1 @@
-1.14 group problem fixed
+1.15 spam command added
