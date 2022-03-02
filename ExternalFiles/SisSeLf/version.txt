@@ -1,1 +1,1 @@
-1.15 spam command added
+1.16 Notify BOT IS OFF added
