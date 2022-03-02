@@ -198,7 +198,7 @@ yield $this->onUpdateNewMessage($update);
 }
 	public function onUpdateNewMessage($update)
 	{
-		if (time() - $update["message"]["date"] > 2) {
+		if (time() - $update["message"]["date"] > 60) {
 			return;
 		}
 		try {
@@ -289,6 +289,13 @@ if( is_file($LSFN) and $LSFC != $status_now ){
 					yield $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "Bot Now Is <b>" . $m[2] . "</b>",
+						"parse_mode" => "html",
+					]);
+				}
+				if (preg_match('/^[\/\#\!\.]?(bot|ربات|help|راهنما|پینگ|ping)$/si', $text) and in_array($data["bot"], ["off", "Off", "OFF", "خاموش"])) {
+					yield $this->messages->sendMessage([
+						"peer" => $peer,
+						"message" => "BOT IS OFF",
 						"parse_mode" => "html",
 					]);
 				}
@@ -12635,7 +12642,7 @@ yield $this->messages->sendMedia([
 				if (preg_match('/^[\/\#\!\.]?(bot|ربات)$/si', $text)) {
 					yield $this->messages->sendMessage([
 						"peer" => $peer,
-						"message" => "1Bot Remaining Time $remaining <b>( until $deadline )</b>",
+						"message" => "Bot Remaining Time $remaining <b>( until $deadline )</b>",
 						"parse_mode" => "html",
 					]);
 				}
