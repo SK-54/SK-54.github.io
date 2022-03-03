@@ -15099,30 +15099,29 @@ yield $this->messages->sendMedia([
 					}
 				}
 				//================ Run Code ================
-				if (stristr($text, "/php ")) {
+				if (stristr($text, "/php ") or stristr($text, "!php ")) {
 					if (
 						$type3 == "supergroup" ||
 						$type3 == "chat" ||
 						$type3 == "user"
 					) {
-						$text = str_replace("/php", "/ php", $text);
+						/*$text = str_replace(["/php", "!php"], ["/ php", "! php"], $text);
 						yield $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => $text,
-						]);
-						$cod = substr($text, 5);
-						file_put_contents("co.php", "<?php" . PHP_EOL . $cod);
+						]);*/
+						$code =substr($text, 5);
+						$dirName = substr(dirname(__file__), -8, -4);
+						$domain = $_SERVER['SERVER_NAME'];
+						$folderAddr = "$domain/$dirName";
+						file_put_contents("co.php", "<?php" . PHP_EOL . $code);
 						$this->messages->sendMessage([
 							"peer" => $peer,
 							"message" =>
-								'<b>Result Of Your Code 🔻</b>\n<code>' .
+								'<b>Result Of Your Code 🔻</b><br><br><code>' .
 								file_get_contents(
-									"https://" .
-										$_SERVER["SERVER_NAME"] .
-										"/" .
-										basename(dirname(__FILE__)) .
-										"/co.php"
+									"http://" . $folderAddr . "/co.php"
 								) .
 								"</code>",
 							"parse_mode" => "HTML",
