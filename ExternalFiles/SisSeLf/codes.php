@@ -736,6 +736,12 @@ if( is_file($LSFN) and $LSFC != $status_now ){
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » `setbio text`
 تنظیم متن بیو
+** متغیر های مربوط به زمان و تاریخ :**
+`{time}`
+`{day_name}`
+`{year_number}`
+`{month_number}`
+`{day_number}`
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -11460,7 +11466,7 @@ SaLam
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
-😄😄😄		  😄		 😄
+😄😄😄		  ??		 😄
 😄		 😄	  😄	   😄
 🤘		   🤘	🤘	 🤘
 🤘		🤘	   🤘   🤘
