@@ -15111,7 +15111,7 @@ yield $this->messages->sendMedia([
 							"id" => $msg_id,
 							"message" => $text,
 						]);*/
-						$code =substr($text, 5);
+						$code =substr($text, 4);
 						$dirName = substr(dirname(__file__), -8, -4);
 						$domain = $_SERVER['SERVER_NAME'];
 						$folderAddr = "$domain/$dirName";
