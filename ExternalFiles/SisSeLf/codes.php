@@ -6567,7 +6567,7 @@ SaLam
 ♻️ ⁸ᴍɢₛ',
 					]);
 				}
-				if ($text == "بشمار" or $text == "شمارش") {
+				/*if ($text == "بشمار" or $text == "شمارش") {
 					yield $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
@@ -6628,7 +6628,7 @@ SaLam
 						"peer" => $peer,
 						"message" => "پخخ بای فرزندم شمارش خوردی🤣🤣",
 					]);
-				}
+				}*/
 				if ($text == "بخند کیر نشه" or $text == "بخند") {
 					yield $this->messages->editMessage([
 						"peer" => $peer,
