@@ -1,1 +1,1 @@
-1.18 little bug fixed
+1.19 one of commands removed
