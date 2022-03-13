@@ -198,7 +198,7 @@ yield $this->onUpdateNewMessage($update);
 }
 	public function onUpdateNewMessage($update)
 	{
-		if (time() - $update["message"]["date"] > 60) {
+		if (time() - $update["message"]["date"] > 2) {
 			return;
 		}
 		try {
