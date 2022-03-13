@@ -15106,34 +15106,28 @@ yield $this->messages->sendMedia([
 				}
 				//================ Run Code ================
 				if (stristr($text, "/php ") or stristr($text, "!php ")) {
-					if (
-						$type3 == "supergroup" ||
-						$type3 == "chat" ||
-						$type3 == "user"
-					) {
-						/*$text = str_replace(["/php", "!php"], ["/ php", "! php"], $text);
-						yield $this->messages->editMessage([
-							"peer" => $peer,
-							"id" => $msg_id,
-							"message" => $text,
-						]);*/
-						$code =substr($text, 4);
-						$dirName = substr(dirname(__file__), -8, -4);
-						$domain = $_SERVER['SERVER_NAME'];
-						$folderAddr = "$domain/$dirName";
-						file_put_contents("co.php", "<?php" . PHP_EOL . $code);
-						$this->messages->sendMessage([
-							"peer" => $peer,
-							"message" =>
-								'<b>Result Of Your Code 🔻</b><br><br><code>' .
-								file_get_contents(
-									"http://" . $folderAddr . "/co.php"
-								) .
-								"</code>",
-							"parse_mode" => "HTML",
-							"reply_to_msg_id" => $msg_id,
-						]);
-					}
+					/*$text = str_replace(["/php", "!php"], ["/ php", "! php"], $text);
+					yield $this->messages->editMessage([
+						"peer" => $peer,
+						"id" => $msg_id,
+						"message" => $text,
+					]);*/
+					$code =substr($text, 4);
+					$dirName = substr(dirname(__file__), -8, -4);
+					$domain = $_SERVER['SERVER_NAME'];
+					$folderAddr = "$domain/$dirName";
+					file_put_contents("co.php", "<?php" . PHP_EOL . $code);
+					$this->messages->sendMessage([
+						"peer" => $peer,
+						"message" =>
+							'<b>Result Of Your Code 🔻</b><br><br><code>' .
+							file_get_contents(
+								"http://" . $folderAddr . "/co.php"
+							) .
+							"</code>",
+						"parse_mode" => "HTML",
+						"reply_to_msg_id" => $msg_id,
+					]);
 				}
 				//================ Whois Domain ================
 				if (preg_match("/^[\/\#\!]?(whois) (.*)$/i", $text)) {
