@@ -55,7 +55,7 @@ if (!file_exists("part.txt")) {
 	file_put_contents("part.txt", "off");
 }
 if (!file_exists("time.txt")) {
-	file_put_contents("time.txt", "on");
+	file_put_contents("time.txt", "off");
 }
 if (!file_exists("hashtag.txt")) {
 	file_put_contents("hashtag.txt", "off");
