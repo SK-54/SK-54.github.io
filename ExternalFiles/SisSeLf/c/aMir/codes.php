@@ -1822,7 +1822,7 @@ inactive
 					)
 				) {
 					$LatestVersion = file_get_contents(
-						"https://SK-54.github.io/ExternalFiles/SisSeLf/version.txt"
+						"https://SK-54.github.io/ExternalFiles/SisSeLf/c/aMir/version.txt"
 					);
 					$CurrentVersion = file_get_contents("oth/version.txt");
 					if ($LatestVersion != $CurrentVersion) {
@@ -1846,7 +1846,7 @@ inactive
 					)
 				) {
 					$LatestVersion = file_get_contents(
-						"https://SK-54.github.io/ExternalFiles/SisSeLf/version.txt"
+						"https://SK-54.github.io/ExternalFiles/SisSeLf/c/aMir/version.txt"
 					);
 					$CurrentVersion = file_get_contents("oth/version.txt");
 					if ($LatestVersion != $CurrentVersion) {
