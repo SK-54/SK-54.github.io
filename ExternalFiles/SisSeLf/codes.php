@@ -352,7 +352,7 @@ if( is_file($LSFN) and $LSFC != $status_now ){
 					]);
 				}
 
-				if (preg_match('/^[\/\#\!\.]?(T|test|ت|تست)$/si', $text)) {
+				if (preg_match('/^[\/\#\!\.]?(T|test|ت|تست|time|زمان)$/si', $text)) {
 					yield $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => date("r"),
@@ -3735,7 +3735,7 @@ SaLam
 					yield $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
-						"message" => "??🔦🙀",
+						"message" => "👽🔦🙀",
 					]);
 				}
 				if (
@@ -8337,7 +8337,7 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥🟥🟥🟥🟥??🟥
+🟥🟥??🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
 					yield $this->sleep(0.4);
@@ -8697,7 +8697,7 @@ SaLam
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥??⬜⬜⬜⬜⬜⬜🟥🟥
+🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
 🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
 🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
 🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
