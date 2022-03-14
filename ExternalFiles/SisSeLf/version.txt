@@ -1,1 +1,1 @@
-1.19 one of commands removed
+1.20 setbio command improved
