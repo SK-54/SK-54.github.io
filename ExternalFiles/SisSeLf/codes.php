@@ -1069,7 +1069,7 @@ if( is_file($LSFN) and $LSFC != $status_now ){
 							$m[2]
 						);
 						yield $this->account->updateProfile(["about" => $Bio]);
-						file_put_contents("bio.txt", $Bio);
+						file_put_contents("bio.txt", $m[2]);
 						$this->messages->sendMessage([
 							"peer" => $peer,
 							"message" => "<b>New Bio :</b> <code>$Bio</code>",
