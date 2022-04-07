@@ -1,1 +1,1 @@
-1.22 setbio command problem resolved.
+1.23 always Online command added
