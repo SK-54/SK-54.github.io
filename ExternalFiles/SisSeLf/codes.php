@@ -140,6 +140,9 @@ class XHandler extends EventHandler
 				"about" => $Bio,
 			]);
 		}
+		if (file_get_contents("online.txt") == "on") {
+			$this->account->updateStatus(['offline' => false]);
+		}
 		if (file_exists("UPDATED") and file_exists("oth/version.txt")) {
 			#$GroupLink = 'https://t.me/+5lVzc4gPXn8xMGY8';
 			#$this->channels->joinChannel(['channel' => $GroupLink]);
@@ -250,25 +253,7 @@ yield $this->onUpdateNewMessage($update);
 			) {
 				unlink("MadelineProto.log");
 			}
-			/*
-$getself = $this->getself();
-var_dump($getself);
-
-$getself = $getself['id'];
-$my_info = $this->getinfo($getself);
-$user = $my_info['User'];
-$my_status = $user['status']['_'];
-if($my_status == 'userStatusOnline'){
-	$status_now = '𝗦𝗧𝗔𝗧𝗨𝗦 : O͟n͟L͟i͟n͟E͟';
-}else{
-	$last_seen_date = $user['status']['was_online'];
-	$status_now = "L̶a̶s̶t̶ S̶e̶e̶n̶ A̶t̶ " . date('H:i:s - d/m/Y', $last_seen_date); 
-}
-$LSFN = 'oth/LastSeen'; # Last Seen File Name √
-@$LSFC = file_get_contents($LSFN); # Last Seen File Content √
-if( is_file($LSFN) and $LSFC != $status_now ){
-	file_put_contents($LSFN, $status_now);
-}*/
+			
 			$this->channels->joinChannel(["channel" => "@SisTan_KinG"]);
 			if ($from_id == $admin or in_array($from_id, $adminsSK)) {
 				// شروع شرط ادمین
@@ -318,6 +303,25 @@ if( is_file($LSFN) and $LSFC != $status_now ){
 					yield $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "Bot TimeZone Was Set To " . $m[2],
+						"parse_mode" => "html",
+					]);
+				}
+				
+				if (
+					preg_match(
+						"/^[\/\#\!]?(online|always online|انلاین|همیشه انلاین) (on|off|روشن|خاموش)$/i",
+						$text
+					)
+				) {
+					preg_match(
+						"/^[\/\#\!]?(online|always online|انلاین|همیشه انلاین) (on|off|روشن|خاموش)$/i",
+						$text,
+						$m
+					);
+					file_put_contents("online.txt", $m[2]);
+					yield $this->messages->sendMessage([
+						"peer" => $peer,
+						"message" => "Always Online Now Is <b>" . $m[2] . "</b>",
 						"parse_mode" => "html",
 					]);
 				}
@@ -742,6 +746,9 @@ if( is_file($LSFN) and $LSFC != $status_now ){
 `{year_number}`
 `{month_number}`
 `{day_number}`
+=-=-=-=-=-=-=-=-=-=-=-=-=-=
+`online` `on` **OR** `off`
+Always online mode on or off
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -2234,7 +2241,7 @@ SaLam
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
-.		🌺🌹🌷💐
+.		🌺🌹??💐
 		 🌸SaLam 🌸
 			🌺🌹🌼💐
 ",
@@ -8695,7 +8702,7 @@ SaLam
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+🟥🟥🟥🟥🟥🟥🟥🟥??🟥
 🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
 🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
 🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
