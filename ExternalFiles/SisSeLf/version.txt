@@ -1,1 +1,1 @@
-1.23 always Online command added
+1.24 Prevent trouble from happening
