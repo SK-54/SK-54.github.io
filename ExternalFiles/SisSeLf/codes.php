@@ -140,7 +140,7 @@ class XHandler extends EventHandler
 				"about" => $Bio,
 			]);
 		}
-		if (file_get_contents("online.txt") == "on") {
+		if (file_exists('online.txt') and file_get_contents("online.txt") == "on") {
 			$this->account->updateStatus(['offline' => false]);
 		}
 		if (file_exists("UPDATED") and file_exists("oth/version.txt")) {
@@ -1463,7 +1463,7 @@ Always online mode on or off
 					yield $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
-						"message" => "💚💛❤️🧡",
+						"message" => "💚💛❤️??",
 					]);
 					yield $this->sleep(0.4);
 					yield $this->messages->editMessage([
