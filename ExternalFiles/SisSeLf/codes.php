@@ -11982,7 +11982,7 @@ SaLam
 						$this->messages->sendMessage(['peer' => $peer, 'message' => $txt ]);
 					}
 				}
-				/* ارسالم میکنه ( اسپم میزنه )
+				
 				if(preg_match("/^[\/\#\!]?(flood) ([0-9]+) (.*)$/i", $text)){
 					preg_match("/^[\/\#\!]?(flood) ([0-9]+) (.*)$/i", $text, $m);
 					$count = $m[2];
@@ -11993,7 +11993,7 @@ SaLam
 						$spm .= " $txt \n";
 					}
 					$this->messages->sendMessage(['peer' => $peer, 'message' => $spm]);
-				}*/
+				}
 				if (preg_match("/^[\/\#\!]?(cor) (.*)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(cor) (.*)$/i", $text, $SisSeLf);
 					$con = str_replace(" ", "%20", $SisSeLf[2]);
@@ -13017,7 +13017,7 @@ yield $this->messages->sendMedia([
 					}
 				}
 				//================ Flood ================
-				if (preg_match("/^[\/\#\!]?(flood) ([0-9]+) (.*)$/i", $text)) {
+				/*if (preg_match("/^[\/\#\!]?(flood) ([0-9]+) (.*)$/i", $text)) {
 					preg_match(
 						"/^[\/\#\!]?(flood) ([0-9]+) (.*)$/i",
 						$text,
@@ -13037,7 +13037,7 @@ yield $this->messages->sendMedia([
 							"message" => $txt,
 						]);
 					}
-				}
+				}*/
 				//================ Cleaner ================
 				if ($text == "clean all" or $text == "پاکسازی کلی") {
 					if ($type3 == "supergroup" || $type3 == "chat") {
