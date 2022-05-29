@@ -792,7 +792,7 @@ Always online mode on or off
 » `/id ` [reply] 
 • *دریافت ایدی کاربر *
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-» `!php ` Code 
+» `/php ` Code 
 • *اجرای کد های زبان PHP *
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » `whois ` Domain 
@@ -15129,28 +15129,37 @@ yield $this->messages->sendMedia([
 					}
 				}
 				//================ Run Code ================
-				if (stristr($text, "/php ") or stristr($text, "!php ")) {
-					/*$text = str_replace(["/php", "!php"], ["/ php", "! php"], $text);
-					yield $this->messages->editMessage([
-						"peer" => $peer,
-						"id" => $msg_id,
-						"message" => $text,
-					]);*/
-					$code =substr($text, 4);
-					$dirName = substr(dirname(__file__), -8, -4);
-					$domain = $_SERVER['SERVER_NAME'];
-					$folderAddr = "$domain/$dirName";
-					file_put_contents("co.php", "<?php" . PHP_EOL . $code);
-					$this->messages->sendMessage([
-						"peer" => $peer,
-						"message" =>
-							'<b>Result Of Your Code 🔻</b><br><br><code>' .
-							file_get_contents(
-								"http://" . $folderAddr . "/co.php"
-							) .
-							"</code>",
-						"parse_mode" => "HTML",
-						"reply_to_msg_id" => $msg_id,
+				
+				if (preg_match('/^[\/](php)\s?(.*)$/usi', $text, $match)) {
+					$result   = null;
+					$errors   = null;
+					$match[2] = "return (function () use 
+					(&\$update){
+					{$match[2]}
+					}
+					)();";
+					
+					ob_start();
+					try {
+					(yield eval($match[2]));
+					$result .= ob_get_contents() . "\n";
+					} catch (\Throwable $e) {
+					$errors .= $e->getMessage() . "\n";
+					}
+					
+					ob_end_clean();
+					if (empty($result)){
+					yield $this->messages->sendMessage([
+					'peer'    => $peer,
+					'message' => 'No Results ...'
+					]);
+					return;
+					}
+					$errors = !empty($errors) ? "\nErrors :\n$errors" : null;
+					$answer = "Results : \n" . $result . $errors;
+					yield $this->messages->sendMessage([
+					'peer'    => $peer,
+					'message' => $answer
 					]);
 				}
 				//================ Whois Domain ================
