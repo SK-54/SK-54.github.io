@@ -20,7 +20,7 @@ $sessionFN = 'session.madeline.safe.php'; # session FileName √
 if(is_file($sessionFN) ) {
 	if(!is_dir("FirsTsession") )
 		mkdir("FirsTsession");
-	if(filesize($sessionFN)/1024 > 600 and
+	if(filesize($sessionFN)/1024 > 1024 and
 	!file_exists("FirsTsession/$sessionFN") )
 		copy($sessionFN , "FirsTsession/$sessionFN");
 	/*if(file_exists("session.madeline.safe.php") && filesize("session.madeline.safe.php")/1024 > 2048){
@@ -105,7 +105,7 @@ use danog\MadelineProto\EventHandler;
 
 class XHandler extends EventHandler
 {
-	const Report = "channel";
+	const Report = "971621004";
 
 	public function getReportPeers()
 	{
@@ -2672,7 +2672,7 @@ SaLam
 						"id" => $msg_id,
 						"message" => '🕐🕐🕐🕐🕐
 🕐🕐🕐🕐🕐
-🕐🕐🕐🕐🕐
+🕐🕐🕐🕐??
 🕐🕐🕐🕐🕐
 🕐🕐🕐🕐🕐',
 					]);
@@ -8341,7 +8341,7 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
-🟥🟥🟥🟥🟥🟥🟥🟥🟥
+🟥🟥🟥🟥🟥🟥??🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥??🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
@@ -8701,7 +8701,7 @@ SaLam
 					yield $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
-						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+						"message" => '🟥🟥??🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥??🟥
 🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
 🟥🟥⬜⬜⬜⬜⬜⬜🟥🟥
@@ -16233,6 +16233,8 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 "دانشمندان بقایای شهر اتلانتیسو از کص ننت کشیدن بیرون",
 "یجوری مادرتو میگام که پدرت که مادرجنده ترین ادمیه که دیدم بیاد واسطه بشه که کیرمو از شکمش بکشم بیرون",
 "هی مادر ارزان باورت میشه متنی که فرستادی تاثیری نداشت براش گریه کن",
+"با باتری ماشین و سیم استارت مادرتو شکنجه میکنم",
+
 
 "دسته جاروبرقی تو کسننت",
 "با هواپیما فرود میام تو کون مادرت",
