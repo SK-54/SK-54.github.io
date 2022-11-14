@@ -159,12 +159,16 @@ class XHandler extends EventHandler
 		}
 
 		if (
-			file_exists("restart") or
 			in_array(date("i"), ["10", "19", "29", "39", "49", "59"])
 		) {
-			@unlink("restart");
 			$this->restart();
 		}
+		if (
+			file_exists("restart")
+		) {
+				@unlink("restart");
+				$this->restart();
+			}
 		if (file_exists("off")) {
 			unlink("off");
 			$this->stop();
@@ -8028,7 +8032,7 @@ SaLam
 						"message" => '🟦🟦🟦🟦🟦
 🟦🟦🟦🔲🟦
 🟦🟦🔳🟦🟦
-🟦🔲🟦🟦🟦
+🟦🔲🟦??🟦
 🟦🟦🟦🟦🟦',
 					]);
 					yield $this->sleep(0.4);
@@ -8339,7 +8343,7 @@ SaLam
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧??🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
-🟧🟧🟧🟧🟧🟧🟧🟧🟧
+🟧🟧🟧🟧🟧🟧??🟧🟧
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥??🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -11007,7 +11011,7 @@ SaLam
 		 🟦
 		 🟩
 🟦	 🟨
-🟫⬜️🟪🟩🟨🟧
+🟫⬜️🟪🟩🟨??
 ⬛️⬜️
 🟩🟦		🟨🟧
 
