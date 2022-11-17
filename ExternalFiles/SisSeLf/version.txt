@@ -1,1 +1,1 @@
-1.24 Prevent trouble from happening
+1.25 improvements
