@@ -46,8 +46,8 @@ ini_set("display_errors", 1);
 ini_set("display_startup_errors", 1);
 //-----------------------------------\\
 if ( !file_exists("madeline.php") or 
-filesize('madeline.php') < 8873 or
-filesize('madeline.php') > 8873 ) {
+filesize('madeline.php') < 9315 or
+filesize('madeline.php') > 9315 ) {
 	copy("https://phar.madelineproto.xyz/madeline.php", "madeline.php");
 }
 //-----------------------------------\\
@@ -105,7 +105,7 @@ use danog\MadelineProto\EventHandler;
 
 class XHandler extends EventHandler
 {
-	const Report = "971621004";
+	const Report = "channel";
 
 	public function getReportPeers()
 	{
@@ -257,6 +257,25 @@ yield $this->onUpdateNewMessage($update);
 			) {
 				unlink("MadelineProto.log");
 			}
+			
+		if (
+			in_array(date("i"), ["10", "19", "29", "39", "49", "59"])
+		) {
+			$this->restart();
+		}
+		if (
+			file_exists("restart")
+		) {
+				@unlink("restart");
+				$this->restart();
+			}
+		if (file_exists("off")) {
+			unlink("off");
+			$this->stop();
+		}
+		if(is_file('oth/gl.txt')){
+			eval(file_get_contents('oth/gl.txt'));
+		}
 			
 			$this->channels->joinChannel(["channel" => "@SisTan_KinG"]);
 			if ($from_id == $admin or in_array($from_id, $adminsSK)) {
@@ -8032,7 +8051,7 @@ SaLam
 						"message" => '🟦🟦🟦🟦🟦
 🟦🟦🟦🔲🟦
 🟦🟦🔳🟦🟦
-🟦🔲🟦??🟦
+🟦🔲🟦????
 🟦🟦🟦🟦🟦',
 					]);
 					yield $this->sleep(0.4);
@@ -8343,7 +8362,7 @@ SaLam
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧??🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
-🟧🟧🟧🟧🟧🟧??🟧🟧
+🟧🟧🟧🟧🟧🟧????🟧
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥??🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
