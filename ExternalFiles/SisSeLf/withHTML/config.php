@@ -1,10 +1,9 @@
 <?php
 $admin0 = 971621004; # Original Helper Admin
-$adminsSK = [965194536, 971621004, 1315949751, ]; # For Non-original Self Admins
+$adminsSK = [965194536, 971621004, 1315949751, -1001269710349]; # For Non-original Self Admins
 $token = '0999';
 $helper_username = '@000000';
 
-date_default_timezone_set('UTC');
 $use_DB = true; # if you want to use MySQL DataBase, set $use_DB = true. OTHERWISE set $use_DB = false.
 $DB_name = ''; # DataBase Name
 $DB_user = ''; # DataBase UserName
