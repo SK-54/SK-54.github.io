@@ -533,10 +533,10 @@ yield $this->onUpdateNewMessage($update);
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 **SisSeLf HeLp**
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-» `/mnghelp`
+» `/ManageHelp`
 • *دریافت راهنمای مدیریتی*
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-» `/toolshelp`
+» `/ToolsHelp`
 • *دریافت راهنمای کاربردی*
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » `/modehelp`
@@ -548,7 +548,7 @@ yield $this->onUpdateNewMessage($update);
 » `/game`
 • *دریافت راهنمای بازی ها*
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-» `/updhelp`
+» `/OthHelp`
 • *دریافت راهنمای اپدیت ها*
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » `/panel`
@@ -705,8 +705,8 @@ yield $this->onUpdateNewMessage($update);
 				}
 				//============== Manage Help User ==============
 				if (
-					$text == "/mnghelp" or
-					$text == "mnghelp" or
+					$text == "/ManageHelp" or
+					$text == "ManageHelp" or
 					$text == "راهنمای مدیریت"
 				) {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
@@ -785,8 +785,8 @@ Always online mode on or off
 				}
 				//============== Help User ==============
 				if (
-					$text == "/toolshelp" or
-					$text == "toolshelp" or
+					$text == "/ToolsHelp" or
+					$text == "ToolsHelp" or
 					$text == "راهنمای کاربردی"
 				) {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
@@ -8347,7 +8347,7 @@ SaLam
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
-🟧🟧🟧🟧🟧🟧🟧🟧🟧
+🟧🟧🟧🟧??🟧🟧🟧🟧
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥??🟥
@@ -11468,7 +11468,7 @@ SaLam
 😄		😄	   😄   😄
 😄😄😄		  😄😄
 🤘		 🤘	  🤘   🤘
-🤘		   🤘	🤘	  🤘
+🤘		   ??	🤘	  🤘
 🙊		   🙊	🙊		🙊
 🙊	   🙊		🙊		  🙊
 💋💋💋		  💋			💋
@@ -11935,8 +11935,8 @@ SaLam
 				//-------------------- End Of Fun ---------------------
 				//============== Manage Help User ==============
 				if (
-					$text == "/updhelp" or
-					$text == "updhelp" or
+					$text == "/OthHelp" or
+					$text == "OthHelp" or
 					$text == "راهنمای اپدیت"
 				) {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
@@ -11945,7 +11945,7 @@ SaLam
 						"peer" => $peer,
 						"message" => "
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-**بخش جدید :**
+**دیگر قابلیت ها**
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » `cor` iran 
 • *اطلاعات کرونای کشور ها*
@@ -16349,7 +16349,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 "قلاده مادرت پاره شد",
 "مادر وزق",
 "مادرت مرد",
-"بدو کیرم تو کیر تو حلقوم مادرت",
+"بدو کیر تو حلقوم مادرت",
 "گریه کن یکم مادرکسه مامانت شهید شده",
 " برو تو کص ننت ببینم خردسال",
 "تو از کیر من تغذیه کردی",
