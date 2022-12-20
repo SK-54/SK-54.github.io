@@ -13068,7 +13068,7 @@ yield $this->messages->sendMedia([
 							"peer" => $peer,
 							"reply_to_msg_id" => $msg_id,
 							"message" =>
-								"[ᴀʟʟ ɢʀᴏᴜᴘ ᴍᴇssᴀɢᴇs ᴡᴇʀᴇ ᴅᴇʟᴇᴛᴇᴅ !](https://T.me/LegacySource)",
+								"[ᴀʟʟ ɢʀᴏᴜᴘ ᴍᴇssᴀɢᴇs ᴡᴇʀᴇ ᴅᴇʟᴇᴛᴇᴅ !](https://T.me/SisTan_KinG)",
 							"parse_mode" => "markdown",
 							"disable_web_page_preview" => true,
 						]);
