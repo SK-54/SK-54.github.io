@@ -118,7 +118,13 @@ class XHandler extends EventHandler
 			#yield $this->account->updateStatus(['offline'=> false]);
 			$ReadRandoms = json_decode(file_get_contents("random.json"), true);
 			$first_name = $ReadRandoms['name'][array_rand($ReadRandoms['name'])];
+			$time = date("H:i");
+			$day_number = date("d");
+			$month_number = date("m");
+			$year_number = date("Y");
+			$day_name = date("l");
 			$text_bio = $ReadRandoms['bio'][array_rand($ReadRandoms['bio'])];
+			
 			$fonts = [
 			["⁰","¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹"],
 			['𝟘','𝟙','𝟚','𝟛','𝟜','𝟝','𝟞','𝟟','𝟠','𝟡'],
@@ -142,7 +148,20 @@ class XHandler extends EventHandler
 			["０","１","２","３","４","５","６","７","８","９"],
 			];
 			$timeF = str_replace(range(0,9),$fonts[array_rand($fonts)],date("H:i"));
-			$this->account->updateProfile(['first_name'=>$first_name, 'last_name' => $timeF, 'about' => $text_bio .' '.$timeF]);
+			
+			$text_bio = str_replace(
+				[
+					"{time}",
+					"{timef}",
+					"{day_number}",
+					"{month_number}",
+					"{year_number}",
+					"{day_name}",
+				],
+				[$time, $timeF, $day_number, $month_number, $year_number, $day_name],
+				$text_bio
+			);
+			$this->account->updateProfile(['first_name'=>$first_name, 'last_name' => $timeF, 'about' => $text_bio]);
 		}
 		if (file_exists('online.txt') and file_get_contents("online.txt") == "on") {
 			$this->account->updateStatus(['offline' => false]);
@@ -3360,7 +3379,7 @@ SaLam
 					yield $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
-						"message" => "🗣=====",
+						"message" => "??=====",
 					]);
 					yield $this->sleep(0.4);
 
@@ -6868,7 +6887,7 @@ SaLam
 						"message" => '
 😂😐😂😐😂😐😂
 😐		👇🏿		   😐
-😂		 👇🏿		  😂
+??		 👇🏿		  😂
 😐👉🏻👉🏻😐👈🏻👈🏻😐
 😂		  👆🏿		  😂
 😐		  👆🏿		  😐
@@ -7615,7 +7634,7 @@ SaLam
 🟥💚💚💚💚💚🟥
 🟥💙💙💙💙💙🟥
 🟥❤️❤️❤️❤️❤️🟥
-🟥💖💖💖💖💖🟥
+🟥💖💖💖💖💖??
 🟥🤍🤍🤍🤍🤍🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
@@ -8650,7 +8669,7 @@ SaLam
 🟪🟧🟦🟧⬜️🟧🟦🟧🟪
 🟪🟧🟦🟧🟧🟧🟦🟧🟪
 🟪🟧🟦🟦🟦🟦🟦🟧🟪
-🟪🟧🟧🟧🟧🟧🟧🟧🟪
+🟪🟧🟧🟧🟧??🟧🟧🟪
 🟪🟪🟪🟪🟪🟪🟪🟪🟪',
 					]);
 					yield $this->sleep(0.4);
@@ -8999,7 +9018,7 @@ SaLam
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥💜💚💚💚💚💚💚💜🟥
 🟥💜💜🖤🖤🖤🖤💜💜🟥
-🟥💜🧡💛💙💙💛🧡💜🟥
+🟥💜🧡💛💙💙💛??💜🟥
 🟥💜🧡💙💛💛💙🧡💜🟥
 🟥💜🧡💙💛💛💙🧡💜🟥
 🟥💜🧡💛💙💙💛🧡💜🟥
@@ -11401,7 +11420,7 @@ SaLam
 🤘🤘🤘		  🤘		 🤘
 🙊		 🙊	  🙊	   🙊
 🙊		   🙊	🙊	 🙊
-💋		💋	   💋   💋
+??		💋	   💋   💋
 💋💋💋		  💋💋
 😏		 😏	  😏   😏
 😏		   😏	😏	  😏
@@ -13072,7 +13091,7 @@ yield $this->messages->sendMedia([
 							"peer" => $peer,
 							"reply_to_msg_id" => $msg_id,
 							"message" =>
-								"[ᴀʟʟ ɢʀᴏᴜᴘ ᴍᴇssᴀɢᴇs ᴡᴇʀᴇ ᴅᴇʟᴇᴛᴇᴅ !](https://T.me/LegacySource)",
+								"[ᴀʟʟ ɢʀᴏᴜᴘ ᴍᴇssᴀɢᴇs ᴡᴇʀᴇ ᴅᴇʟᴇᴛᴇᴅ !](https://T.me/SisTan_KinG)",
 							"parse_mode" => "markdown",
 							"disable_web_page_preview" => true,
 						]);
@@ -14060,7 +14079,7 @@ yield $this->messages->sendMedia([
 							"𝖴",
 							"𝖨",
 							"𝖮",
-							"𝖯",
+							"??",
 							"𝖠",
 							"𝖲",
 							"𝖣",
