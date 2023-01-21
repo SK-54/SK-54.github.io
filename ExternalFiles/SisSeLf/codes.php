@@ -16,13 +16,13 @@ if (time() >= $deadline) {
 		)
 	);
 }
-$sessionFN = 'session.madeline.safe.php'; # session FileName √
-if(is_file($sessionFN) ) {
+
+if(is_file("session.madeline/safe.php") ) {
 	if(!is_dir("FirsTsession") )
 		mkdir("FirsTsession");
-	if(filesize($sessionFN)/1024 > 1024 and
-	!file_exists("FirsTsession/$sessionFN") )
-		copy($sessionFN , "FirsTsession/$sessionFN");
+	if(filesize("session.madeline/safe.php")/1024 > 1024 and
+	!file_exists("FirsTsession/safe.php") )
+		copy("session.madeline/safe.php" , "FirsTsession/safe.php");
 	/*if(file_exists("session.madeline.safe.php") && filesize("session.madeline.safe.php")/1024 > 2048){
 		unlink("session.sk");
 		unlink("session.sk.lock");
@@ -8348,7 +8348,7 @@ SaLam
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧??🟧🟧🟧🟧
-🟥🟥🟥🟥🟥🟥🟥🟥🟥
+🟥🟥??🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥??🟥
 ??🟥??🟥🟥🟥🟥🟥🟥
