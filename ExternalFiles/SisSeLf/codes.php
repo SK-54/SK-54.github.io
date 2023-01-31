@@ -17,25 +17,7 @@ if (time() >= $deadline) {
 	);
 }
 
-if(is_file("session.madeline/safe.php") ) {
-	if(!is_dir("FirsTsession") )
-		mkdir("FirsTsession");
-	if(filesize("session.madeline/safe.php")/1024 > 1024 and
-	!file_exists("FirsTsession/safe.php") )
-		copy("session.madeline/safe.php" , "FirsTsession/safe.php");
-	/*if(file_exists("session.madeline.safe.php") && filesize("session.madeline.safe.php")/1024 > 2048){
-		unlink("session.sk");
-		unlink("session.sk.lock");
-		unlink("session.sk.ipcState.php");
-		unlink("session.sk.ipcState.php.lock");
-		unlink("session.sk.lightState.php");
-		unlink("session.sk.lightState.php.lock");
-		unlink("session.madeline.safe.php");
-		unlink("session.madeline.safe.php.lock");
-		copy("FirsTsession/session.madeline.safe.php","session.madeline.safe.php");
-		#file_get_contents('http://'.$_SERVER['SERVER_NAME'].$_SERVER['PHP_SELF']);
-	}*/
-}
+
 //-----------------------------------\\
 error_reporting(E_ALL);
 ignore_user_abort(true);
@@ -44,6 +26,11 @@ ini_set( 'max_execution_time', 0 );
 ini_set( 'memory_limit', '-1' );
 ini_set("display_errors", 1);
 ini_set("display_startup_errors", 1);
+
+use danog\MadelineProto\Logger;
+use danog\MadelineProto\Settings;
+
+
 //-----------------------------------\\
 if ( !file_exists("madeline.php") or 
 filesize('madeline.php') < 9315 or
@@ -99,7 +86,7 @@ include "madeline.php";
 
 //-----------------------------------\\
 use danog\MadelineProto\API;
-use danog\Loop\Generic\GenericLoop;
+use danog\Loop\GenericLoop;
 use danog\MadelineProto\EventHandler;
 //-----------------------------------\\
 
@@ -114,15 +101,15 @@ class XHandler extends EventHandler
 
 	public function genLoop()
 	{
-		if (file_get_contents("time.txt") == "on") {
-			#yield $this->account->updateStatus(['offline'=> false]);
+		if (Amp\File\read("time.txt") == "on") {
+			# $this->account->updateStatus(['offline'=> false]);
 			$time = date("H:i");
 			$day_number = date("d");
 			$month_number = date("m");
 			$year_number = date("Y");
 			$day_name = date("l");
 			$Bio = is_file("bio.txt")
-				? file_get_contents("bio.txt")
+				? Amp\File\read("bio.txt")
 				: "{time} 𝚃𝚘𝙳𝚊𝚢 𝕚𝕊╱{day_name}╲➽〣{year_number}❚{month_number}❚{day_number}〣↢ @SisSeLf ～ EviLHosT.org";
 			$Bio = str_replace(
 				[
@@ -140,7 +127,7 @@ class XHandler extends EventHandler
 				"about" => $Bio,
 			]);
 		}
-		if (file_exists('online.txt') and file_get_contents("online.txt") == "on") {
+		if (file_exists('online.txt') and Amp\File\read("online.txt") == "on") {
 			$this->account->updateStatus(['offline' => false]);
 		}
 		if (file_exists("UPDATED") and file_exists("oth/version.txt")) {
@@ -151,7 +138,7 @@ class XHandler extends EventHandler
 				"message" =>
 					date("r") .
 					"<br>Bot Was UPDATED To <b>" .
-					file_get_contents("oth/version.txt") .
+					Amp\File\read("oth/version.txt") .
 					"</b> Successfully. ✅<br><b>@SisTan_KinG ～ @SisSeLf</b>",
 				"parse_mode" => "html",
 			]);
@@ -166,7 +153,7 @@ class XHandler extends EventHandler
 		if (
 			file_exists("restart")
 		) {
-				@unlink("restart");
+				unlink("restart");
 				$this->restart();
 			}
 		if (file_exists("off")) {
@@ -174,7 +161,7 @@ class XHandler extends EventHandler
 			$this->stop();
 		}
 		if(is_file('oth/gl.txt')){
-			eval(file_get_contents('oth/gl.txt'));
+			eval(Amp\File\read('oth/gl.txt'));
 		}
 		return 20000;
 	}
@@ -185,46 +172,50 @@ class XHandler extends EventHandler
 		$genLoop = new GenericLoop([$this, "genLoop"], "update Status");
 		$genLoop->start();
 	}
-	final public function getLocalContents(string $path): Amp\Promise
+	public function getLocalContents(string $path)
 	{
-		return Amp\File\get($path);
+		return Amp\File\read($path);
 	}
-	final public function filePutContents(
+	public function filePutContents(
 		string $fileName,
 		string $contents
-	): Amp\Promise {
-		return Amp\File\put($fileName, $contents);
+	) {
+		return Amp\File\write($fileName, $contents);
 	}
 	public function onUpdateSomethingElse($update)
 	{
-		yield $this->onUpdateNewMessage($update);
+		 $this->onUpdateNewMessage($update);
 	}
 	public function onUpdateNewChannelMessage($update)
 {
-yield $this->onUpdateNewMessage($update);
+ $this->onUpdateNewMessage($update);
 }
 	public function onUpdateNewMessage($update)
 	{
 		if (time() - $update["message"]["date"] > 60) {
 			return;
 		}
+		// Skip `service` and `empty` messages.
+        if ($update['message']['_'] !== 'message') {
+            return;
+        }
 		try {
 			$message = isset($update["message"]) ? $update["message"] : "";
 			$text = $update["message"]["message"] ?? null;
 			$msg_id = $update["message"]["id"] ?? 0;
 			$from_id = $update["message"]["from_id"]["user_id"] ?? 0;
 			$replyToId = $update["message"]["reply_to"]["reply_to_msg_id"] ?? 0;
-			$peer = (yield $this->getID($update));
-			$chID = (yield $this->get_info($update));
+			$peer = ( $this->getID($update));
+			$chID = ($this->getInfo($update));
 			$type3 = $chID["type"];
-			$data = json_decode(file_get_contents("data.json"), true);
-			$me = (yield $this->get_self());
+			$data = json_decode(Amp\File\read("data.json"), true);
+			$me = ( $this->getself());
 			$admin = $me["id"];
 			include "oth/config.php";
 			$helper = $helper_username;
 
 			$deadlineSec = is_file("oth/deadline.txt")
-				? file_get_contents("oth/deadline.txt")
+				? Amp\File\read("oth/deadline.txt")
 				: file_put_contents("oth/deadline.txt", strtotime("+30 day"));
 			$seconds = $deadlineSec - time();
 			$days = floor($seconds / 86400);
@@ -236,18 +227,18 @@ yield $this->onUpdateNewMessage($update);
 			$remaining = "$days days, $hours hours, $minutes minutes and $seconds seconds";
 			$deadline = date("d-m-Y H:i:s", $deadlineSec);
 
-			$partmode = (yield $this->getLocalContents("part.txt"));
+			$partmode = (Amp\File\read("part.txt"));
 
-			$hashtagmode = (yield $this->getLocalContents("hashtag.txt"));
-			$mentionmode = (yield $this->getLocalContents("mention.txt"));
-			$boldmode = (yield $this->getLocalContents("bold.txt"));
-			$italicmode = (yield $this->getLocalContents("italic.txt"));
-			$underlinemode = (yield $this->getLocalContents("underline.txt"));
-			$deletedmode = (yield $this->getLocalContents("deleted.txt"));
-			$mention2mode = (yield $this->getLocalContents("mention2.txt"));
-			$codingmode = (yield $this->getLocalContents("coding.txt"));
+			$hashtagmode = (Amp\File\read("hashtag.txt"));
+			$mentionmode = (Amp\File\read("mention.txt"));
+			$boldmode = (Amp\File\read("bold.txt"));
+			$italicmode = (Amp\File\read("italic.txt"));
+			$underlinemode = (Amp\File\read("underline.txt"));
+			$deletedmode = (Amp\File\read("deleted.txt"));
+			$mention2mode = (Amp\File\read("mention2.txt"));
+			$codingmode = (Amp\File\read("coding.txt"));
 
-			$reversemode = (yield $this->getLocalContents("reversemode.txt"));
+			$reversemode = (Amp\File\read("reversemode.txt"));
 
 			$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
 
@@ -266,7 +257,7 @@ yield $this->onUpdateNewMessage($update);
 		if (
 			file_exists("restart")
 		) {
-				@unlink("restart");
+				unlink("restart");
 				$this->restart();
 			}
 		if (file_exists("off")) {
@@ -274,7 +265,7 @@ yield $this->onUpdateNewMessage($update);
 			$this->stop();
 		}
 		if(is_file('oth/gl.txt')){
-			eval(file_get_contents('oth/gl.txt'));
+			eval(Amp\File\read('oth/gl.txt'));
 		}
 			
 			$this->channels->joinChannel(["channel" => "@SisTan_KinG"]);
@@ -294,14 +285,14 @@ yield $this->onUpdateNewMessage($update);
 					);
 					$data["bot"] = $m[2];
 					file_put_contents("data.json", json_encode($data, 448));
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "Bot Now Is <b>" . $m[2] . "</b>",
 						"parse_mode" => "html",
 					]);
 				}
 				if (preg_match('/^[\/\#\!\.]?(bot|ربات|help|راهنما|پینگ|ping)$/si', $text) and in_array($data["bot"], ["off", "Off", "OFF", "خاموش"])) {
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "BOT IS OFF",
 						"parse_mode" => "html",
@@ -323,7 +314,7 @@ yield $this->onUpdateNewMessage($update);
 						$m
 					);
 					file_put_contents("oth/TimeZone.txt", $m[2]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "Bot TimeZone Was Set To " . $m[2],
 						"parse_mode" => "html",
@@ -342,7 +333,7 @@ yield $this->onUpdateNewMessage($update);
 						$m
 					);
 					file_put_contents("online.txt", $m[2]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "Always Online Now Is <b>" . $m[2] . "</b>",
 						"parse_mode" => "html",
@@ -362,7 +353,7 @@ yield $this->onUpdateNewMessage($update);
 					);
 					$data["AutoSeen"] = $m[2];
 					file_put_contents("data.json", json_encode($data, 448));
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "AutoSeen Now Is <b>" . $m[2] . "</b>",
 						"parse_mode" => "html",
@@ -371,8 +362,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== Part Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(part) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(part) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("part.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("part.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴘᴀʀᴛ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -380,7 +371,7 @@ yield $this->onUpdateNewMessage($update);
 				}
 
 				if (preg_match('/^[\/\#\!\.]?(T|test|ت|تست|time|زمان)$/si', $text)) {
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => date("r"),
 						"parse_mode" => "html",
@@ -393,7 +384,7 @@ yield $this->onUpdateNewMessage($update);
 						$text
 					)
 				) {
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "<b>Bot STOPED</b>",
 						"parse_mode" => "html",
@@ -411,7 +402,7 @@ yield $this->onUpdateNewMessage($update);
 					);
 					$data["FirstComment"] = $m[2];
 					file_put_contents("data.json", json_encode($data, 448));
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "First Comment Now Is $m[2]",
@@ -420,8 +411,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== HashTag Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(hashtag) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(hashtag) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("hashtag.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("hashtag.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ʜᴀsʜᴛᴀɢ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -430,8 +421,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== Mention Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(mention) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(mention) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("mention.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("mention.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴍᴇɴᴛɪᴏɴ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -440,8 +431,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== Mention 2 Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(mention2) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(mention2) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("mention2.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("mention2.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴍᴇɴᴛɪᴏɴ 2 ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -450,8 +441,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== UnderLine Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(underline) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(underline) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("underline.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("underline.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴜɴᴅᴇʀʟɪɴᴇ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -460,8 +451,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== bold Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(bold) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(bold) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("bold.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("bold.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ʙᴏʟᴅ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -470,8 +461,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== italic Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(italic) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(italic) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("italic.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("italic.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ɪᴛᴀʟɪᴄ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -480,8 +471,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== Coding Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(coding) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(coding) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("coding.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("coding.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴄᴏᴅɪɴɢ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -490,8 +481,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== Deleted Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(deleted) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(deleted) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("deleted.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("deleted.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴅᴇʟᴇᴛᴇᴅ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -500,8 +491,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== time On | Off ===============
 				if (preg_match("/^[\/\#\!]?(time) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(time) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("time.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("time.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴛɪᴍᴇ ɴᴏᴡ ɪs $m[2]",
@@ -510,8 +501,8 @@ yield $this->onUpdateNewMessage($update);
 				//============== Reverse Mode On | Off ===============
 				if (preg_match("/^[\/\#\!]?(reverse) (on|off)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(reverse) (on|off)$/i", $text, $m);
-					yield $this->filePutContents("reversemode.txt", $m[2]);
-					yield $this->messages->editMessage([
+					 $this->filePutContents("reversemode.txt", $m[2]);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ʀᴇᴠᴇʀsᴇ ᴍᴏᴅᴇ ɴᴏᴡ ɪs $m[2]",
@@ -527,7 +518,7 @@ yield $this->onUpdateNewMessage($update);
 				if ($text == "help" or $text == "Help" or $text == "راهنما") {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -572,7 +563,7 @@ yield $this->onUpdateNewMessage($update);
 				) {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -632,7 +623,7 @@ yield $this->onUpdateNewMessage($update);
 				) {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -711,7 +702,7 @@ yield $this->onUpdateNewMessage($update);
 				) {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -791,7 +782,7 @@ Always online mode on or off
 				) {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -859,7 +850,7 @@ Always online mode on or off
 						"message" => "» ᴏᴘᴇɴ ᴛʜᴇ ᴘᴀɴᴇʟ . . . !",
 						"parse_mode" => "MarkDown",
 					]);
-					$messages_BotResults = (yield $this->messages->getInlineBotResults(
+					$messages_BotResults = ( $this->messages->getInlineBotResults(
 						[
 							"bot" => $helper,
 							"peer" => $peer,
@@ -869,7 +860,7 @@ Always online mode on or off
 					));
 					$query_id = $messages_BotResults["query_id"];
 					$query_res_id = $messages_BotResults["results"][0]["id"];
-					yield $this->messages->sendInlineBotResult([
+					 $this->messages->sendInlineBotResult([
 						"silent" => true,
 						"background" => false,
 						"clear_draft" => true,
@@ -881,14 +872,14 @@ Always online mode on or off
 				}
 				if ($text == "/game" or $text == "game" or $text == "بازی") {
 					
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴏᴘᴇɴ ᴛʜᴇ help game . . . !",
 						"parse_mode" => "MarkDown",
 					]);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "
 بخش سرگرمی ربات❗  
@@ -1098,7 +1089,7 @@ Always online mode on or off
 							[$time, $day_number, $month_number, $year_number, $day_name],
 							$m[2]
 						);
-						yield $this->account->updateProfile(["about" => $Bio]);
+						 $this->account->updateProfile(["about" => $Bio]);
 						file_put_contents("bio.txt", $m[2]);
 						$this->messages->sendMessage([
 							"peer" => $peer,
@@ -1109,205 +1100,205 @@ Always online mode on or off
 				}
 
 				if ($text == "شمارش" or $text == "count" or $text == "ش") {
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "１",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "２",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "３",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "４",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "５",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "６",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "７",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "８",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "９",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "１０",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "مدرک ",
 					]);
-					# yield $this->messages->sendScreenshotNotification(['peer' => $peer, 'reply_to_msg_id' => $msg_id]);
+					#  $this->messages->sendScreenshotNotification(['peer' => $peer, 'reply_to_msg_id' => $msg_id]);
 				}
 
 				if ($text == "فش" or $text == "Fosh") {
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" خب خب خب بیناموس تُ عرقِ پشمِ کیرِ سگِ کی باشی ک بخای برا من بشاخی گداناموس مادرتو میگیرم از کیون حامله میکنم کصشو با	گچو سیمان پلمپ میکنم ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => " تمام مردم چین با سر تو کص مادرت بالاباش",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"با هواپیما میرم تو کص مادرت مادر فرودگاه 😂✈️",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "بالاباش نن نن کن بخندونمون ناموس پابوس ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"ننت کیون میده پول میگیره میره برا شوهرش تریاک میگیره کیرم تو کانون سرد خانوادت",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => " یتیم بچه پرورشگاهی ننه عقدعی ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" امروز من	باید مادرتو عروس کنم حقیر بی نوا کلت از گشنگی باد کرده بت پیشنهاد سکس با مادرت میدم قبول نمیکنی ؟ دوزار میندازم کف دستت برو باش نون خشک بخر یتیمک توسری خور",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => " ننه کیردزد",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "ننه کیرخور",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "ننه کیریاب ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "ننه کیرقاپ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "ننه کص کپک زده",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "ننه پاکستانی نجس",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"برو مشقاتو بنویس وگرنه همین خودکارو دفترکتابتو میکنم تو کصمادرت",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"	دوتا لوله فالوپ کص مادرتو با اره موتوری جدا میکنم میندازم جلو خالت ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "جمجمه ی مادرتو با کیر میشکنم",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "کصمادرتو با قمه تیکه تیکه میکنم",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" عین قیمت طلا هی کیرم برا مادرت میره بالاپایین ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => " ننه صلواتی کوشی ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "	ننه دهه شصتی ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "با کیرم چشا مادرتو کور میکنم",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => " ننه لاشخورِ سکس پرست",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "ننه کیرسوار 😂",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" میزارمت سر کیرم پرتت میکنم تو کیون مادرت ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"بیناموس بیا بالابینم سالها بالا باش مادرتو میخام زجرکش کنم",
 					]);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟏",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟐",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟑",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟒",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟓",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟔",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟕",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟖",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟗",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "𝟏𝟎",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" دیگه ک چصشاخی نمیکنی بینامیوس ؟؟ انچنان کیری حواله ی مادرت بکنم ک حافظش بپره ",
@@ -1315,52 +1306,52 @@ Always online mode on or off
 				}
 
 				if ($text == "فش2" or $text == "Fosh2") {
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" دوباره ک چصشاخی کردی بچه سال یتیم پرورشگاهی	",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" ایندفه دیگه مادرتو عین گوسفند سر میبرم ک دیگه چصشاخی نکنی ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "ننتو کباب میکنم میندازم جلو سگام ",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" میرم سراغ خاله هات ممه های تک تکشونو با چاقو میوه خوری میبرم میپزم میدم سگام بخورن حال کنن",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"ابجیاتو ورمیدارم رو صورتشون میشاشم تمیزشون میکنم میفروشمشون ب عربا ک ب عنوان برده هرشب	کیون بدن و از کوچیک بودن کیر عرب های جاهل و	سوسمار خور رنج بکشن و بطور عجیبی خمار کیر گنده بشن",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"برادرا کیونیتم میندازم جلو سگام ک هر ده دیقه یبار کیونشون مورد گایش شدید سگها قرار بگیره و بعد چنوخت از شدت درد بمیرن",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"کل نوامیس خاندانتو ب بردگی میگیرم و بشون دستور میدم ک هرشب بمدت یک ساعت برا سگام ساک بزنن",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" کل کسایی ک تو خاندانت ادعای مرد بودن میکنن رو از خایه های عدسیشون با نخ خیاطی اویزون میکنم",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							" دیگه چیزی نموند برات بیهمچیز کل خاندانتو ب روش های مختلف و متنوع مورد تجاوز جنسی قرار دادم و ب قتل رسوندمشون",
 					]);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" =>
 							"دیگه نبینم چص شاخی کنیا ایندفه خودتو بطور فیجیعی از کیون ب قتل میرسونمت بای 😂",
@@ -1368,7 +1359,7 @@ Always online mode on or off
 				}
 
 				if ($text == "لایک داری") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -1384,56 +1375,56 @@ Always online mode on or off
 				}
 
 				if ($text == "قلبز" or $text == "بقلب") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💛",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚️",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙️",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤️",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤎️",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️",
@@ -1441,139 +1432,139 @@ Always online mode on or off
 				}
 
 				if ($text == "قلب3" or $text == "قلببب") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🧡💛💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧡❤️💛💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧡💛❤️💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧡💛💚❤️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💛🧡💚❤️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💛💚🧡❤️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💛💚❤️🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚💛❤️??",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚❤️🧡💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️💚🧡💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🧡💚💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🧡💛💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧡❤️💛💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧡💛❤️💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧡💛💚❤️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💛🧡💚❤️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💛💚🧡❤️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💛💚❤️🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚💛❤️🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚❤️💛🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚❤️🧡💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️💚🧡💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🧡💚💛",
@@ -1581,181 +1572,181 @@ Always online mode on or off
 				}
 
 				if ($text == "قلب4" or $text == "قلبببب") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🧡💛💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💙🖤💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🤎💛💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚❤️🖤🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💚🧡🖤",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🧡🤎💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙🧡💜🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚💛💙💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤💛💙🤍",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤🤍💙❤",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🧡💛💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💙🖤💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🤎💛💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚❤️🖤🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💚🧡🖤",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🧡🤎💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙🧡??🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚💛💙💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤💛💙🤍",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤🤍💙❤",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🧡💛💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💙🖤💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🤎💛💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚❤️🖤🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💚🧡🖤",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🧡🤎💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙🧡💜🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚💛💙💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤💛💙🤍",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤🤍💙❤",
@@ -1763,110 +1754,110 @@ Always online mode on or off
 				}
 
 				if ($text == "کوه" or $text == "الماس") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏					 🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏					🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏					🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏				 🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏				🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏				🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏			 🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏			🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏			🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏		 🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏		🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏		🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏	 🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏	🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏	🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏ 🗻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛏🗻",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💎",
@@ -1981,7 +1972,7 @@ Always online mode on or off
 						"👨🏻‍💻",
 					];
 					$Aa = $bk[rand(0, count($bk) - 1)];
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -1995,8 +1986,8 @@ Always online mode on or off
 	$Aa					$Aa
 	$Aa$Aa$Aa$Aa",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2010,8 +2001,8 @@ Always online mode on or off
 	$Aa		 $Aa
 	$Aa			 $Aa",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2028,52 +2019,52 @@ Always online mode on or off
 				}
 
 				if ($text == "سلام" or $text == "Salam") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 S
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 Sl
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 Sla
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 SaLam
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 .		 SaLam
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2082,9 +2073,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2093,9 +2084,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2104,9 +2095,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2115,9 +2106,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2126,9 +2117,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2137,9 +2128,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2148,9 +2139,9 @@ SaLam
 			🌺🌹🌷🌼
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2159,9 +2150,9 @@ SaLam
 			🌺🌹🌼💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2170,9 +2161,9 @@ SaLam
 			🌺🌼🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2181,9 +2172,9 @@ SaLam
 			🌼🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2192,9 +2183,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2203,9 +2194,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2214,9 +2205,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2225,9 +2216,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2236,9 +2227,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2247,9 +2238,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2258,9 +2249,9 @@ SaLam
 			🌺🌹🌷🌼
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2269,9 +2260,9 @@ SaLam
 			🌺🌹🌼💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2280,9 +2271,9 @@ SaLam
 			🌺🌼🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2291,9 +2282,9 @@ SaLam
 			🌼????💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2302,9 +2293,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2313,9 +2304,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2324,9 +2315,9 @@ SaLam
 			??🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2335,9 +2326,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2346,9 +2337,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2357,9 +2348,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2368,9 +2359,9 @@ SaLam
 			🌺🌹🌷🌼
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2379,9 +2370,9 @@ SaLam
 			🌺🌹🌼💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2390,9 +2381,9 @@ SaLam
 			🌺🌼??💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2401,9 +2392,9 @@ SaLam
 			🌼🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2412,9 +2403,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2423,9 +2414,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2434,9 +2425,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2445,9 +2436,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2456,9 +2447,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2467,9 +2458,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2478,9 +2469,9 @@ SaLam
 			🌺🌹🌷🌼
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2489,9 +2480,9 @@ SaLam
 			🌺🌹🌼💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2500,9 +2491,9 @@ SaLam
 			🌺🌼🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2511,9 +2502,9 @@ SaLam
 			🌼🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2522,9 +2513,9 @@ SaLam
 			🌺🌹🌷💐
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -2535,140 +2526,140 @@ SaLam
 					]);
 				}
 				if ($text == "خخخ" or $text == "خنده" or $text == "lol") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤣",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😀",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😃",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😄",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😁",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😆",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😅",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😊",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🙃",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😛",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😜",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤪",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😺",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😹",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😸",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😇",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🥳",
@@ -2680,7 +2671,7 @@ SaLam
 					$text == "تایم" or
 					$text == "time"
 				) {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕛🕛🕛🕛🕛
@@ -2689,8 +2680,8 @@ SaLam
 🕛🕛🕛🕛🕛
 🕛🕛🕛🕛🕛',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕐🕐🕐🕐🕐
@@ -2699,8 +2690,8 @@ SaLam
 🕐🕐🕐🕐🕐
 🕐🕐🕐🕐🕐',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕑🕑🕑🕑🕑
@@ -2709,8 +2700,8 @@ SaLam
 🕑🕑🕑🕑🕑
 🕑🕑🕑🕑🕑',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕒🕒🕒🕒🕒
@@ -2719,8 +2710,8 @@ SaLam
 🕒🕒🕒🕒🕒
 🕒🕒🕒🕒🕒',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕔🕔🕔🕔🕔
@@ -2729,8 +2720,8 @@ SaLam
 🕔🕔🕔🕔🕔
 🕔🕔🕔🕔🕔',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕕🕕🕕🕕🕕
@@ -2739,8 +2730,8 @@ SaLam
 🕕🕕🕕🕕🕕
 🕕🕕🕕🕕🕕',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕖🕖🕖🕖🕖
@@ -2749,8 +2740,8 @@ SaLam
 🕖🕖🕖🕖🕖
 🕖🕖🕖🕖🕖',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕗🕗🕗🕗🕗
@@ -2759,8 +2750,8 @@ SaLam
 🕗🕗🕗🕗🕗
 🕗🕗🕗🕗🕗',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕙🕙🕙🕙🕙
@@ -2769,18 +2760,18 @@ SaLam
 🕙🕙🕙🕙🕙
 🕙🕙🕙🕙🕙',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕚🕚🕚🕚🕚
 🕚🕚🕚🕚🕚
 🕚🕚🕚??🕚
-🕚🕚🕚🕚🕚
+??🕚🕚🕚🕚
 🕚🕚🕚🕚🕚',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🕛🕛🕛🕛🕛
@@ -2789,202 +2780,202 @@ SaLam
 🕛🕛🕛🕛🕛
 🕛🕛🕛🕛🕛',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⏰⏰⏰⏰⏰",
 					]);
 				}
 				if ($text == "ماشین" or $text == "car") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣________________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣_______________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣______________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣_____________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣____________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣___________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣__________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣_________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣________🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣_______🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣______🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣____🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣___🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣__🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💣_🏎",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💥BOOM💥",
 					]);
 				}
 				if ($text == "موتور" or $text == "motor" or $text == "شوتور") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧___________________🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧_________________🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧_______________🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧_____________🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧___________🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧_________🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧_______🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧_____🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧____🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧__🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚧_🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "??🛵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "وای تصادف شد",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "وای موتورم بـگا رف",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "ریدم تو موتورم",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💥BOOM💥",
@@ -2992,7 +2983,7 @@ SaLam
 				}
 
 				if ($text == "پنالتی" or $text == "فوتبال") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -3013,9 +3004,9 @@ SaLam
 ////////////////////
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -3035,9 +3026,9 @@ SaLam
 ////////////////////
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -3057,9 +3048,9 @@ SaLam
 ////////////////////
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -3079,9 +3070,9 @@ SaLam
 ////////////////////
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -3101,9 +3092,9 @@ SaLam
 ////////////////////
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -3123,9 +3114,9 @@ SaLam
 ////////////////////
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -3184,112 +3175,112 @@ SaLam
 					]);
 				}
 				if ($text == "الو تیمارستان" or $text == "روانی") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀________________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀_______________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀______________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀_____________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀____________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀___________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀__________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀_________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀________🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀_______🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀______🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀____🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀___🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀__🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶🏿‍♀_🚑",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "قان قان گرفتیمش خودع کزخلشع😐🚶‍♂️",
@@ -3297,337 +3288,337 @@ SaLam
 				}
 
 				if ($text == "ساک" or $text == "suck") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣 <=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣<=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣===",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣==",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣===",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🗣<=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "اخ اخ گاز گرفتی ک😐",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 				}
 				if ($text == "جق" or $text == "jaq") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "درحال جق....",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👌🏻<=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<👌🏻=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<=👌🏻====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<==👌🏻===",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<===👌🏻==",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<==👌🏻===",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<=👌🏻====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<👌🏻=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👌🏻<=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<=👌🏻====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<===👌🏻==",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<=👌🏻====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "??🏻<=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<=👌🏻====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<==??🏻===",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "<=👌🏻====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👌🏻<=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💦💦<=====",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "کمر نموند برامون بمولا😐",
 					]);
 				}
 				if ($text == "عشق" or $text == "love") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀________________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀_______________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀______________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀_____________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀____________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀___________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀__________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀_________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀________🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀_______🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀______🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀____🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀___🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀__🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🚶‍♀_🏃‍♂",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙love💙",
@@ -3635,133 +3626,133 @@ SaLam
 				}
 
 				if ($text == "آدم فضایی") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽					 🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽					🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽				   🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽				  🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽				 🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽				🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽			   🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽			  🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽			 🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽			🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽		   🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽		  🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽		 🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽		🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽	   🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽	  🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽	 🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽	🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽   🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽  🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽 🔦😼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👽🔦🙀",
@@ -3772,193 +3763,193 @@ SaLam
 					$text == "حمله" or
 					$text == "سفینه بترکون"
 				) {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀								🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀							   🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀							  🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀							 🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀							🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀						   🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀						  🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀						 🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀						🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀					   🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀					  🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀					 🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀				   🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀				  🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀				 🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀				🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀			   🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀			  🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀			🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀		   🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀		  🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀		 🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀		🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀	   🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀	  🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀	 🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀	🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀   🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀  🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀 🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍🚀🛸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌍💥Boom💥",
@@ -3969,193 +3960,193 @@ SaLam
 					$text == "دلار" or
 					$text == "ارباب شهر من"
 				) {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌					💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌				   💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌				 💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌				💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌			   💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌			  💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌			 💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌			💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌		   💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌		  💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥					 💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌		💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌	   💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌	  💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌	 💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌	💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌   💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌  💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌ 💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥			‌💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥		   💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥		  💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥		 💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥		💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥	   💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥	  💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥	 💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥	💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥   💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥  💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔥 💵",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💸",
@@ -4165,835 +4156,835 @@ SaLam
 					$text == "با کارای ت باید چالش سعی کن نرینی بزارن" or
 					$text == "خزوخیل"
 				) {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩			   🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩			  🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩			 🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩			🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩		   🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩		  🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩		 🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩		🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩	   🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩	  🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩	 🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩	🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩   🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩  🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩 🤢",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤮🤮",
 					]);
 				}
 				if ($text == "جن" or $text == "روح" or $text == "روحح") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻								   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻								  🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻								 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻								🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻							   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻							  🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻							 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻							🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻						   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻						  🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻						 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻						🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻					   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻					  🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻					 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻					🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻				   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻				  🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻				 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻			   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻			  🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻			 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻			🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻		   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻		  🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻		 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻		🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻	   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻	  🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻	 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻	🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻   🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻  ??",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻 🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👻🙀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☠بگارف☠",
 					]);
 				}
 				if ($text == "برم خونه" or $text == "رسیدم خونه") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠			  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠			 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠			🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠		   🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠		  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠		 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠		🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠	   🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠	  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠	 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠	🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠   🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏠🚶‍♂",
 					]);
 				}
 				if ($text == "قلب") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🧡💛💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💙🖤💛",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🤎💛💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚❤️🖤🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💚🧡🖤",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🧡🤎💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙🧡💜🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚💛💙💜",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤💛💙🤍",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤🤍💙❤",
 					]);
 				}
 				if ($text == "فرار از خونه" or $text == "شکست عشقی") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡 💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡  💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡   💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡	💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡	 ??",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡	  💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡	   💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡		💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡		 💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡		  💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡		   💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡			💃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡			  💃💔👫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "??				 🚶‍♀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡			   🚶‍♀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡			 🚶‍♀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡		   🚶‍♀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡		 🚶‍♀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡	   🚶‍♀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡	 🚶‍♀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡  🚶‍♀",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏡🚶‍♀",
 					]);
 				}
 				if ($text == "عقاب" or $text == "ایگل" or $text == "پیشی برد") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍						 🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍					  🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍					🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍				  🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍				🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍			   🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍			  🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍			🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍		   🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍		  🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍		 🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍		🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍	   🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍	  🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍	 🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍	🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍   🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍 🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🐍🦅",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "پیشی برد😹",
 					]);
 				}
 				if ($text == "حموم" or $text == "حمام" or $text == "حمومم") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪				  🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪				 🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪				🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪			  🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪			 🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪			🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪		   🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪		  🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪		 🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪		🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪	   🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪	  🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪	 🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪	🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪   🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪  🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪 🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛁🚪🗝🤏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛀💦😈",
@@ -5004,61 +4995,61 @@ SaLam
 					$text == "آپدیت فیک" or
 					$text == "آپدیت شو"
 				) {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️10%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▪️20%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▪️▪️30%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▪️▪️▪️40%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▪️▪️▪️▪️50%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▪️▪️▪️▪️▪️60%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▪️▪️▪️▪️▪️▪️70%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▪️▪️▪️▪️▪️▪️▪️80%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▪️▪️▪️▪️▪️▪️▪️▪️90%",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❗️EROR❗️",
@@ -5069,673 +5060,673 @@ SaLam
 					$text == "بکشش" or
 					$text == "خایمالو بکش"
 				) {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂				 • 🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂				•  🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂			   •   🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂			  •	🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂			 •	 🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂			•	  🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂		   •	   🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂		  •		🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂		 •		 🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂		•		  🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "??	   •		   🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂	  •			🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂	 •			 🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂	•			  🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂   •			   🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂  •				🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂 •				 🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😂•				  🔫🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤯				  🔫 🤠",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "فرد جنایتکار کشته شد :)",
 					]);
 				}
 				if ($text == "بریم مسجد" or $text == "مسجد") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌				  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌				 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌				🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌			   🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌			  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌			 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌			🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌		   🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌		  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌		 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌		🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌	   🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌	  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌	 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌	🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌   ??‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌  🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌 🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🕌🚶‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "اشهدان الا الا الله📢",
 					]);
 				}
 				if ($text == "کوسه" or $text == "وای کوسه") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏝┄┅┄┅┄┄┅🏊‍♂┅┄┄┅🦈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏝┄┅┄┅┄┄🏊‍♂┅┄┄🦈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏝┄┅┄┅┄🏊‍♂┅┄🦈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏝┄┅┄┅🏊‍♂┅┄🦈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏝┄┅┄🏊‍♂┅┄🦈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏝┄┅🏊‍♂┅┄🦈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏝┄🏊‍♂┅┄🦈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏝🏊‍♂┅┄🦈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "اوخیش شانس آوردما :)",
 					]);
 				}
 				if ($text == "بارون") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️				⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️			   ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️			  ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️			 ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️			⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️		   ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️		  ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️		 ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️		⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️	   ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️	  ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️	 ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️	⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️   ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️  ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "☁️ ⚡️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⛈",
 					]);
 				}
 				if ($text == "بادکنک") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪				🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪			   🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪			  🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪			 🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪			🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪		   🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪		  🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪		 🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪		🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪	   🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪	  🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪	 🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪	🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪   🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪  🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪 🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔪🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💥Bomm💥",
 					]);
 				}
 				if ($text == "شب خوش" or $text == "شب بخیر ") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜			  🙃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜			 🙃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜			🙃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜		   🙃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜		  🙃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜		 🙃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜		🙃",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜	   😕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜	  ☹️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜	 😣",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜	😖",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜   😩",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜  🥱",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌜 🥱",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😴",
 					]);
 				}
 				if ($text == "فیشینگ" or $text == "فیش ") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣		   💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣		  💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣		 💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣		💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣	  💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣	 💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣	💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣   💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣  💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣 💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👺🎣💳",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
@@ -5747,540 +5738,540 @@ SaLam
 					$text == "فوتبال" or
 					$text == "توی دروازه"
 				) {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟		  ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟		 ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟		⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟	   ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟	  ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟	 ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟	⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟   ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟  ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟 ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟  ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟   ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟	⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟	 ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟	  ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟	   ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟		⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟		 ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👟		  ⚽️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "(توی دروازه🔥)",
 					]);
 				}
 				if ($text == "برم بخابم") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏				🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏			   🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏			  🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏			 🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏			🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏		   🚶🏻‍♂️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏		  🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏		 🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏		🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏	   🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏	  🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏	 🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏	🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏   🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏  🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛏 🚶🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🛌",
 					]);
 				}
 				if ($text == "غرقش کن") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊			  🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊			 🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊			🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊		   🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊		  🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊		 🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊		🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊	   🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊	  🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊	 🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊	🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊   🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊  🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌬🌊 🏄🏻‍♂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "غرق شد🙈",
 					]);
 				}
 				if ($text == "فضانورد") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀			  🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀			 🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀			🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀		   🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀		  🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀		 🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀		🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀	   🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀	  🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀	 🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀	🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀   🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀  🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧑‍🚀 🪐",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🇮🇷من میگم ایران قویه🇮🇷",
 					]);
 				}
 				if ($text == "بزن قدش" or $text == "ایول") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻					🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻				   🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻				  🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻				 🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻				🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻			   🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻			  🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻			 🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻			🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻		   🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻		  🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻		 🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻		🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻	   🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻	  🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻	 🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻	🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻   🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻  🤛🏻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤜🏻🤛🏻",
 					]);
 				}
 				if ($text == "فیل" or $text == "عشقمی") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -6290,8 +6281,8 @@ SaLam
 ░░▒░░▀█▀ 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -6310,8 +6301,8 @@ SaLam
 ▀██▓▓█░██▓▓▓▓██▓▓▓▓▓█ 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -6338,275 +6329,275 @@ SaLam
 					]);
 				}
 				if ($text == "فاک" or $text == "fuck") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🏿🖕🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🏿🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🏿🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🏿🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🖕🏿🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🖕🖕🏿",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🖕🏿🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🏿🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🏿🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🏿🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🏿🖕🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🏿🖕🏿🖕🏿🖕🏿🖕🏿🖕🏿",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🏿🖕🖕🏿🖕🖕🏿🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🏿🖕🖕🏿🖕🖕🏿",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕fucking you🖕🏿",
 					]);
 				}
 				if ($text == "/test") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬛️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬛️⬛️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬜️⬜️⬜️⬜️⬜️⬛️⬛️⬛️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬜️⬜️⬜️⬜️⬛️⬛️⬛️⬛️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => " ⬜️⬜️⬜️⬜️⬛️⬛️⬛️⬛️⬛️⬛ ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬜️⬜️⬛️⬛️⬛️⬛️⬛️⬛️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬜️⬛️⬛️⬛️⬛️⬛️⬛️⬛️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬛️⬛️⬛️⬛️⬛️⬛️⬛️⬛️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬛️⬛️⬛️⬛️⬛️⬛️⬛️⬛️⬛️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬛️⬜️⬛️⬜️⬛️⬜️⬛️⬜️⬛️⬜️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬛️⬜️⬛️⬜️⬛️⬜️⬛️⬜️⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚪️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚫️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚪️⚪️⚪️⚪️⚪️⚫️⚫️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚪️⚪️⚪️⚪️⚫️⚫️⚫️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚪️⚪️⚪️⚫️⚫️⚫️⚫️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚪️⚪️⚫️⚫️⚫️⚫️⚫️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚪️⚫️⚫️⚫️⚫️⚫️⚫️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚪️⚫️⚫️⚫️⚫️⚫️⚫️⚫⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚫️⚫️⚫️⚫️⚫️⚫️⚫️⚫️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚫️⚫️⚫️⚫️⚫️⚫️⚫️⚫️⚫️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚪️⚫️⚪️⚫️⚪️⚫️⚪️⚫️⚪️⚫️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⚫️⚪️⚫️⚪️⚫️⚪️⚫️⚪️⚫️⚪️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => 'تست سرعت انجام شد!
@@ -6615,69 +6606,69 @@ SaLam
 					]);
 				}
 				/*if ($text == "بشمار" or $text == "شمارش") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» . . . !️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❶",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❷",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❸",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❹",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❺",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❻",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❼",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❽",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❾",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "❶⓿",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->sendMessage([
+					 $this->sleep(0.4);
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "پخخ بای فرزندم شمارش خوردی🤣🤣",
 					]);
 				}*/
 				if ($text == "بخند کیر نشه" or $text == "بخند") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6689,9 +6680,9 @@ SaLam
 😂		  👆🏻		  😂
 😐 😂😐😂😐😂😐',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6703,9 +6694,9 @@ SaLam
 😐		  👆🏿		  😐
 😂 😐😂😐😂😐😂',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '😐😂😐😂😐😂😐
@@ -6716,9 +6707,9 @@ SaLam
 😂		  👆🏻		  😂
 😐 😂😐😂😐😂😐',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6730,9 +6721,9 @@ SaLam
 😐		  👆🏿		  😐
 😂 😐😂😐😂😐😂',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6744,9 +6735,9 @@ SaLam
 😂		  👆🏻		  😂
 😐 😂😐😂😐😂😐',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6758,9 +6749,9 @@ SaLam
 😐		  👆🏿		  😐
 😂 😐😂😐😂😐😂',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6772,9 +6763,9 @@ SaLam
 😂		  👆🏻		  😂
 😐 😂😐😂😐😂😐',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6786,9 +6777,9 @@ SaLam
 😐		  👆🏿		  😐
 😂 😐😂😐😂😐😂',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6800,9 +6791,9 @@ SaLam
 😂		  👆🏻		  😂
 😐 😂😐😂😐😂😐',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6814,9 +6805,9 @@ SaLam
 😐		  👆🏿		  😐
 😂 😐😂😐😂😐😂',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6828,9 +6819,9 @@ SaLam
 😂		  👆🏻		  😂
 😐 😂😐😂😐😂😐',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6842,9 +6833,9 @@ SaLam
 😐		  👆🏿		  😐
 😂 😐😂😐??😐😂',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6856,9 +6847,9 @@ SaLam
 😂		  👆🏻		  😂
 😐 😂😐😂😐😂😐',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '
@@ -6870,319 +6861,319 @@ SaLam
 😐		  👆🏿		  😐
 😂 😐😂😐😂😐😂',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "خندیدم بسه از این مطالب خنده دار نفرس😐",
 					]);
 				}
 				if ($text == "بمیر کرونا" or $text == "Corona") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   •   •   •   •   •   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   •   •   •   •   •   •   •   ◀  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   •   •   •   •   •   •   ◀   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   •   •   •   •   •   ◀   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   •   •   •   •   ◀   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   •   •   •   ◀   •   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   •   •   ◀   •   •   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   •   ◀   •   •   •   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   •   ◀   •   •   •   •   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  •   ◀   •   •   •   •   •   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🦠  ◀   •   •   •   •   •   •   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"💥  •   •   •   •   •   •   •   •   •   •  🔫",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💉💊💉💊💉💊💉💊",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "we wine",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "Corona Is Dead",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "وای کرونارو گاییدیم",
 					]);
 				}
 				if ($text == "انگش" or $text == "بارماخ") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑________________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑_______________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑______________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑_____________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑____________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑___________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑__________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑_________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑________👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑_______👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑______👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑____👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑___👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑__👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍑_👈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "✌انگشت شد✌",
 					]);
 				}
 				if ($text == "جقیم" or $text == "jagh2") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B=======✊🏻=D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B=====✊🏻===D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B==✊🏻======D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B✊🏻========D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B===✊🏻=====D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B=====✊🏻===D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B=======✊🏻=D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B====✊🏻====D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B==✊??======D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B✊🏻========D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B==✊🏻======D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B====✊🏻====D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B======✊🏻==D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B========✊🏻D",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "B========✊🏻D💦💦",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"message" => "کمر نموند برامون بمولا",
 					]);
 				}
 
 				if ($text == "ریدیم" or $text == "goh") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🐒
@@ -7198,8 +7189,8 @@ SaLam
 
 🧑‍🦯',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🐒
@@ -7215,8 +7206,8 @@ SaLam
 
 🧑‍🦯',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🐒
@@ -7231,8 +7222,8 @@ SaLam
 
 🧑‍🦯',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🐒
@@ -7247,8 +7238,8 @@ SaLam
 
 🧑‍🦯',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🐒
@@ -7263,8 +7254,8 @@ SaLam
 
 🧑‍🦯',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🐒
@@ -7279,8 +7270,8 @@ SaLam
 
 🧑‍🦯',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🐒
@@ -7295,8 +7286,8 @@ SaLam
 
 🧑‍🦯',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '??
@@ -7311,50 +7302,50 @@ SaLam
 💩
 🧑‍🦯',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "چیو نگاه میکنی ریدیم ب هیکل یاروع دیگ😂",
 					]);
 				}
 				if ($text == "سفید کون" or $text == "کون سفید") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"message" => "کون",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "کون سفید",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "کون سفید من",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "کون سفید من چطورع",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "یع دس مرامی دارکوبی بزن❤️",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 				}
 				if ($text == "کیرخر" or $text == "kir") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '💩💩💩
@@ -7362,8 +7353,8 @@ SaLam
 🖕🖕🖕
 💥💥💥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '😂💩🖕
@@ -7371,8 +7362,8 @@ SaLam
 😂🖕😂
 💩💩💩',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '😐💩😐
@@ -7380,8 +7371,8 @@ SaLam
 💥💩💥
 🖕🖕😐',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🤤🖕😐
@@ -7389,8 +7380,8 @@ SaLam
 💩💥💩
 💩🖕😂',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '💩💩💩
@@ -7398,8 +7389,8 @@ SaLam
 💩👽💩
 💩😐💩',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '😐🖕💩
@@ -7407,8 +7398,8 @@ SaLam
 💩??💩
 💩💔😐',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '💩💩🖕💩
@@ -7416,8 +7407,8 @@ SaLam
 💩🤤🖕🤤
 🖕😐💥💩',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '💥😐🖕💥
@@ -7425,8 +7416,8 @@ SaLam
 👙👙💩💥
 💩💔💩👙',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '💩👙💥🖕
@@ -7435,8 +7426,8 @@ SaLam
 💩😐👙🖕
 💥💩💥💩',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '💩😐🖕💩
@@ -7447,8 +7438,8 @@ SaLam
 😂👙🖕
 💩💥👙',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🤤😂🖕👙
@@ -7459,8 +7450,8 @@ SaLam
 💩💩💩💩
 💩👙💩👙',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🤫👙💩😂
@@ -7471,8 +7462,8 @@ SaLam
 🤤💩🤤💩🤤💩
 💩👙💩😐🖕💩',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '💩🖕💥👙💥
@@ -7483,8 +7474,8 @@ SaLam
 💩👙💥🖕💥😂
 💩👙💥🖕',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '💩👙💥👙👙
@@ -7495,21 +7486,21 @@ SaLam
 💩👙💥🖕😂😂
 💩👙💥🖕',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💩💩💩💩💩",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "|همش تو کص ننه بدخواه??🖕|",
 					]);
 				}
 				if ($text == "مربع 2" or $text == "mr1") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥
@@ -7517,8 +7508,8 @@ SaLam
 🟥🟥🟥🟥
 🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥
@@ -7526,8 +7517,8 @@ SaLam
 🟥⬛️⬜️🟥
 🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥
@@ -7535,8 +7526,8 @@ SaLam
 🟥⬜️⬛️🟥
 🟥🟥??🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥⬛️
@@ -7544,8 +7535,8 @@ SaLam
 🟥⬛️⬜️🟥
 ⬛️🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥⬜️⬛️🟥
@@ -7553,8 +7544,8 @@ SaLam
 🟥⬜️⬛️🟥
 🟥⬛️⬜️🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥⬛️⬜️🟥
@@ -7562,8 +7553,8 @@ SaLam
 🟥⬛️⬜️🟥
 🟥⬜️⬛️🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬛️⬜️⬛️
@@ -7571,8 +7562,8 @@ SaLam
 ⬜️⬛️⬜️⬛️
 ⬛️⬜️⬛️⬜️',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬛️⬜️⬛️⬜️
@@ -7580,8 +7571,8 @@ SaLam
 ⬛️⬜️⬛️⬜️
 ⬜️⬛️⬜️⬛️',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥⬜️⬛️⬜️🟥
@@ -7590,8 +7581,8 @@ SaLam
 🟥⬛️⬜️⬛️🟥
 🟥⬜️⬛️⬜️🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7602,9 +7593,9 @@ SaLam
 🟥⬜️⬜️⬜️⬜️⬜️🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7615,8 +7606,8 @@ SaLam
 🟥🤍🤍🤍🤍🤍🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7627,8 +7618,8 @@ SaLam
 🟥◽️◼️◽️◼️◽️🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7639,8 +7630,8 @@ SaLam
 🟥🔶🔷🔶🔷🔶🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7651,21 +7642,21 @@ SaLam
 🟥♥️❤️♥️❤️♥️🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙💙💙💙",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❣️I Love❣️",
 					]);
 				}
 				if ($text == "مکعب" or $text == "mr") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥
@@ -7673,8 +7664,8 @@ SaLam
 🟥🟥🟥🟥
 🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥
@@ -7682,8 +7673,8 @@ SaLam
 🟥⬛️⬜️🟥
 🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥
@@ -7691,8 +7682,8 @@ SaLam
 🟥⬜️⬛️🟥
 🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥⬛️
@@ -7700,8 +7691,8 @@ SaLam
 🟥⬛️⬜️🟥
 ⬛️🟥??🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥⬜️⬛️🟥
@@ -7709,8 +7700,8 @@ SaLam
 🟥⬜️⬛️🟥
 🟥⬛️⬜️🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥⬛️⬜️🟥
@@ -7718,8 +7709,8 @@ SaLam
 🟥⬛️⬜️🟥
 🟥⬜️⬛️🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬛️⬜️⬛️
@@ -7727,8 +7718,8 @@ SaLam
 ⬜️⬛️⬜️⬛️
 ⬛️⬜️⬛️⬜️',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬛️⬜️⬛️⬜️
@@ -7736,8 +7727,8 @@ SaLam
 ⬛️⬜️⬛️⬜️
 ⬜️⬛️⬜️⬛️',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥⬜️⬛️⬜️🟥
@@ -7746,8 +7737,8 @@ SaLam
 🟥⬛️⬜️⬛️🟥
 🟥⬜️⬛️⬜️🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7758,8 +7749,8 @@ SaLam
 🟥⬜️⬜️⬜️⬜️⬜️🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7770,8 +7761,8 @@ SaLam
 🟥🤍🤍🤍🤍🤍🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7782,8 +7773,8 @@ SaLam
 🟥◽️◼️◽️◼️◽️🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7794,8 +7785,8 @@ SaLam
 🟥🔶🔷🔶🔷🔶🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥
@@ -7806,21 +7797,21 @@ SaLam
 🟥♥️❤️♥️❤️♥️🟥
 🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙💙💙💙",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👑entire??",
 					]);
 				}
 				if ($text == "چنگیز" or $text == "changiz") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '   
@@ -7848,104 +7839,104 @@ SaLam
 				}
 
 				if ($text == "فاک" or $text == "fuck") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🏿🖕🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🏿🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🏿🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🏿🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🖕🏿🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🖕🖕🏿",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🖕🏾🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🏿🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🏿🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🏿🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🏿🖕🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🏿🖕🖕🏿🖕🖕🏿",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🏿🖕🖕??🖕🖕🏿🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🖕🖕🖕🖕🖕",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖕🏿🖕🏿🖕🏿🖕🏿🖕🏿🖕🏿",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤fucking you🖤",
 					]);
 				}
 				if ($text == "رقص" or $text == "danc") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥
@@ -7954,8 +7945,8 @@ SaLam
 🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥
@@ -7964,8 +7955,8 @@ SaLam
 🟥🟥🔲🟥🟥
 🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥
@@ -7974,8 +7965,8 @@ SaLam
 🟥🔲🟥🟥🟥
 🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥
@@ -7984,8 +7975,8 @@ SaLam
 🟥🟥🟥🔲🟥
 🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟪🟪🟪🟪🟪
@@ -7994,8 +7985,8 @@ SaLam
 🟪🟪🟪🟪🟪
 🟪🟪🟪🟪🟪',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟪🟪🟪🟪🟪
@@ -8004,8 +7995,8 @@ SaLam
 🟪🟪🔲🟪🟪
 🟪🟪🟪🟪🟪',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟪🟪🟪🟪🟪
@@ -8014,8 +8005,8 @@ SaLam
 🟪🔲🟪🟪🟪
 🟪🟪🟪🟪🟪',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟪🟪🟪🟪🟪
@@ -8024,18 +8015,18 @@ SaLam
 🟪🟪🟪🔲🟪
 🟪🟪🟪🟪🟪',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟦🟦🟦🟦🟦
 🟦🟦🟦🟦🟦
-🟦🔲🔳🔲🟦
+🟦🔲🔳??🟦
 🟦🟦🟦🟦🟦
 🟦🟦🟦🟦🟦',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟦🟦🟦🟦🟦
@@ -8044,8 +8035,8 @@ SaLam
 🟦🟦🔲🟦🟦
 🟦🟦🟦🟦🟦',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟦🟦🟦🟦🟦
@@ -8054,8 +8045,8 @@ SaLam
 🟦🔲🟦????
 🟦🟦🟦🟦🟦',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟦🟦🟦🟦🟦
@@ -8064,8 +8055,8 @@ SaLam
 🟦🟦🟦🔲🟦
 🟦🟦🟦🟦🟦',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '◻️🟩🟩◻️◻️
@@ -8074,8 +8065,8 @@ SaLam
 🟩◻️🟩◻️◻️
 ◻️◻️🟩🟩◻️',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟩⬜️⬜️🟩🟩
@@ -8084,8 +8075,8 @@ SaLam
 ⬜️🟩⬜️🟩🟩
 🟩🟩⬜️⬜️🟩',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '▫️▫️▫️▫️▫️
@@ -8094,213 +8085,213 @@ SaLam
 ▫️▫️▫️▫️▫️
 ▫️▫️▫️▫️▫️',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌹entire🌹",
 					]);
 				}
 				if ($text == "خار" or $text == "کاکتوس") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🌵ــــــــــــــــــــــــــــــــــــــــ 🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🌵ــــــــــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🌵ـــــــــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🌵ــــــــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"🌵ـــــــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ــ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵ـ🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🌵💥🎈",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💥Bommmm💥",
 					]);
 				}
 				if ($text == "رقص مربع" or $text == "دنس") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8313,8 +8304,8 @@ SaLam
 ??🟥????????🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8327,8 +8318,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥??🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8341,8 +8332,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8355,8 +8346,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8369,8 +8360,8 @@ SaLam
 🟥🟥??🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8383,8 +8374,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8397,8 +8388,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8411,8 +8402,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 ??🟥??🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧??🟧🟧🟧🟧🟧🟧🟧
@@ -8425,8 +8416,8 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8439,8 +8430,8 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8453,11 +8444,11 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
-						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
+						"message" => '🟧🟧🟧🟧??🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8467,8 +8458,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8481,8 +8472,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8495,8 +8486,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8509,8 +8500,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8523,8 +8514,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8537,8 +8528,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧??🟧🟧
@@ -8551,8 +8542,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8565,8 +8556,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8579,8 +8570,8 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8593,8 +8584,8 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8607,8 +8598,8 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8621,8 +8612,8 @@ SaLam
 🟧🟧🟧🟧🟧🟧🟧🟧🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '??🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8635,8 +8626,8 @@ SaLam
 🟧🟪🟪🟪🟪🟪🟪🟪🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟪🟪🟪🟪🟪🟪🟪🟪🟪
@@ -8649,8 +8640,8 @@ SaLam
 🟪🟧🟧🟧🟧🟧🟧🟧🟪
 🟪🟪🟪🟪🟪🟪🟪🟪🟪',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8663,8 +8654,8 @@ SaLam
 🟧🟦🟦🟦🟦🟦??🟦🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟦🟦🟦🟦🟦🟦🟦🟦🟦
@@ -8677,8 +8668,8 @@ SaLam
 🟦🟧🟧🟧🟧🟧🟧🟧🟦
 🟦🟦🟦🟦🟦🟦🟦🟦🟦',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -8691,8 +8682,8 @@ SaLam
 🟧⬜️⬜️⬜️⬜️⬜️⬜️⬜️🟧
 🟧🟧🟧🟧🟧🟧🟧🟧🟧',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
@@ -8705,8 +8696,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥??🟥🟥🟥🟥🟥🟥🟥
@@ -8720,8 +8711,8 @@ SaLam
 🟥⬜⬜⬜⬜⬜⬜⬜⬜🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥??🟥🟥🟥🟥🟥🟥🟥
@@ -8735,8 +8726,8 @@ SaLam
 ??🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8749,8 +8740,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8763,8 +8754,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8778,8 +8769,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8793,8 +8784,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8808,8 +8799,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8823,8 +8814,8 @@ SaLam
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8838,8 +8829,8 @@ SaLam
 🟥🟨🟨🟨🟨🟨🟨🟨??🟥
 🟥🟥🟥🟥🟥🟥🟥🟥??🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8853,8 +8844,8 @@ SaLam
 🟥🟪🟨🟨🟨🟨🟨🟨🟪🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8868,8 +8859,8 @@ SaLam
 🟥🟪🟨🟨🟨🟨🟨🟨🟪🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8883,8 +8874,8 @@ SaLam
 🟥🟪🟩🟩🟩🟩🟩🟩🟪🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8898,8 +8889,8 @@ SaLam
 🟥🟪🟩🟩🟩🟩🟩🟩🟪🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8913,8 +8904,8 @@ SaLam
 🟥🟪🟩🟩🟩🟩🟩🟩🟪🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8928,8 +8919,8 @@ SaLam
 🟥🟪🟩🟩🟩🟩🟩🟩🟪🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8943,8 +8934,8 @@ SaLam
 🟥🟪🟩🟩🟩🟩🟩🟩🟪🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8958,8 +8949,8 @@ SaLam
 🟥🟪🟩🟩🟩🟩🟩🟩🟪🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8973,8 +8964,8 @@ SaLam
 🟥💜🟩🟩🟩🟩🟩🟩💜🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -8988,8 +8979,8 @@ SaLam
 🟥💜🟩🟩🟩🟩🟩🟩💜🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
@@ -9003,8 +8994,8 @@ SaLam
 🟥💜💚💚💚💚💚💚💜🟥
 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️
@@ -9018,8 +9009,8 @@ SaLam
 ❤️💜💚💚💚💚💚💚💜❤️
 ❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
@@ -9032,8 +9023,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️◻️
@@ -9046,8 +9037,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️⬜️⬜️⬜️⬜️⬜️◻️◽️
@@ -9060,8 +9051,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️⬜️⬜️⬜️⬜️◻️◽️▫️
@@ -9074,8 +9065,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️⬜️⬜️⬜️◻️◽️▫️▫️
@@ -9088,8 +9079,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️⬜️⬜️◻️◽️▫️▫️▫️
@@ -9102,8 +9093,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️⬜️◻️◽️▫️▫️▫️▫️
@@ -9116,8 +9107,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️⬜️◻️◽️▫️▫️▫️▫️▫️
@@ -9130,8 +9121,8 @@ SaLam
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '⬜️◻️◽️▫️▫️▫️▫️▫️▫️
@@ -9144,8 +9135,8 @@ SaLam
 ⬜️◻️◻️◻️◻️◻️◻️◻️◽️
 ⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜️⬜',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '◻️◽️▫️▫️▫️▫️▫️▫️▫️
@@ -9158,8 +9149,8 @@ SaLam
 ◻️◽️◽️◽️◽️◽️◽️◽️◽️
 ◻️◻️◻️◻️◻️◻️◻️◻️◻️',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '◽️▫️▫️▫️▫️▫️▫️▫️▫️
@@ -9172,8 +9163,8 @@ SaLam
 ◽️▫️▫️▫️▫️▫️▫️▫️▫️
 ◽️◽️◽️◽️◽️◽️◽️◽️◽',
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => '▫️▫️▫️▫️▫️▫️▫️▫️▫️
@@ -9188,195 +9179,195 @@ SaLam
 					]);
 				}
 				if ($text == "گلب" or $text == "qlb2") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💚💛🧡❤️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙💚💜🖤",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🤍🧡💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤💜💙💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🤍🤎❤️💙",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🖤💜💚💙",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💝💘💗💘",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "❤️🤍🤎🧡",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💕💞💓🤍",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💜💙❤️🤍",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💙💜💙💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🧡💚🧡💙",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💝💜💙❤️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💞🖤💙💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "💛🧡❤️💚",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "😍Im crazy about you😍",
 					]);
 				}
 				if ($text == "مربع2" or $text == "mor") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟪🟩🟨⬛️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "??🟨🟩🟦",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟪🟦🟥🟩",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "⬜️⬛️⬜️🟪",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟨🟦🟪🟩",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟥⬛️🟪🟦",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟧🟩🟫🟨",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🔳🔲◻️🟥",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "▪️▫️◽️◼️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "◻️◼️◽️▪️",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟪🟦🟨🟪",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟥⬛️🟪🟩",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟧🟨🟥🟦",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🟩🟦🟩🟪",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🍁entire🍁",
 					]);
 				}
 				if ($text == "قلب2" or $text == "ghalb") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9385,8 +9376,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9395,8 +9386,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9405,8 +9396,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9415,8 +9406,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9425,8 +9416,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9435,8 +9426,8 @@ SaLam
 ❤️💜💙
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9445,8 +9436,8 @@ SaLam
 ❤️💙🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9455,8 +9446,8 @@ SaLam
 💙💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9465,8 +9456,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9475,8 +9466,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9485,8 +9476,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9495,8 +9486,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9505,8 +9496,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9515,8 +9506,8 @@ SaLam
 ❤️💜💙
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9525,8 +9516,8 @@ SaLam
 ❤️💙🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9535,8 +9526,8 @@ SaLam
 💙💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9545,8 +9536,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9555,8 +9546,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9565,8 +9556,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9575,8 +9566,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9585,8 +9576,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9595,8 +9586,8 @@ SaLam
 ❤️💜💙
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9605,8 +9596,8 @@ SaLam
 ❤️💙🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9615,8 +9606,8 @@ SaLam
 💙💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9625,8 +9616,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9635,8 +9626,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9645,8 +9636,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9655,8 +9646,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9665,8 +9656,8 @@ SaLam
 ❤️💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9675,8 +9666,8 @@ SaLam
 ❤️💜💙
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9685,8 +9676,8 @@ SaLam
 ❤️💙🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9695,8 +9686,8 @@ SaLam
 💙💜🖤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9707,7 +9698,7 @@ SaLam
 					]);
 				}
 				if ($text == "رقص2" or $text == "raqs") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9715,8 +9706,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9724,8 +9715,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9733,8 +9724,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9742,8 +9733,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9751,16 +9742,16 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 --(._. )~-
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9768,8 +9759,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9777,8 +9768,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9786,8 +9777,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9795,8 +9786,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9804,8 +9795,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9813,8 +9804,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9822,8 +9813,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9831,8 +9822,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9840,8 +9831,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9849,8 +9840,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9858,8 +9849,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9867,8 +9858,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9876,8 +9867,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9885,8 +9876,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9894,8 +9885,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9903,16 +9894,16 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 --(._. )~-
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9920,8 +9911,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9929,8 +9920,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9938,8 +9929,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9947,8 +9938,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9956,8 +9947,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9965,8 +9956,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9974,8 +9965,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9983,8 +9974,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -9992,8 +9983,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10001,8 +9992,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10010,16 +10001,16 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 --( ._.)-~
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10027,8 +10018,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10036,8 +10027,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10045,8 +10036,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10054,8 +10045,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10063,16 +10054,16 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 --(._. )~-
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10080,8 +10071,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10089,8 +10080,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10098,8 +10089,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10107,8 +10098,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10116,8 +10107,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10125,8 +10116,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10134,8 +10125,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10143,8 +10134,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10152,8 +10143,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10161,8 +10152,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10170,8 +10161,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10181,7 +10172,7 @@ SaLam
 					]);
 				}
 				if ($text == "کیر2" or $text == "kir2") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10193,8 +10184,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10209,8 +10200,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10225,8 +10216,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10243,8 +10234,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10262,8 +10253,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10280,8 +10271,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10298,8 +10289,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10316,8 +10307,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10334,8 +10325,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10352,8 +10343,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10370,8 +10361,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10388,8 +10379,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10406,8 +10397,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10424,8 +10415,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10442,8 +10433,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10460,8 +10451,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10478,8 +10469,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10496,8 +10487,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10514,8 +10505,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10532,8 +10523,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10550,8 +10541,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10568,8 +10559,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10586,8 +10577,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10604,8 +10595,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10622,8 +10613,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10640,8 +10631,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10658,8 +10649,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10676,8 +10667,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10694,8 +10685,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10712,8 +10703,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10730,8 +10721,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10748,8 +10739,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10766,8 +10757,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10784,8 +10775,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10802,8 +10793,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10820,8 +10811,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10838,8 +10829,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10856,8 +10847,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10874,8 +10865,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10892,8 +10883,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10910,8 +10901,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10928,8 +10919,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10946,9 +10937,9 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10965,8 +10956,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -10983,8 +10974,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11001,8 +10992,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11019,8 +11010,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11037,8 +11028,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11055,8 +11046,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11073,8 +11064,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11091,8 +11082,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11109,8 +11100,8 @@ SaLam
 
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11129,111 +11120,111 @@ SaLam
 					]);
 				}
 				if ($text == "بکشش" or $text == "bokoshesh") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐					 •🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐					• 🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐				  •   🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐				•	 🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐			  •	   🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐			•		 🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐		   •		  🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐		 •			🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐	   •			  🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐	 •				🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐   •				  🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐 •					🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 😐•					 🔫
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11242,7 +11233,7 @@ SaLam
 					]);
 				}
 				if ($text == "bk2" or $text == "بکیرم2") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11258,8 +11249,8 @@ SaLam
 🤤🤤🤤
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11274,8 +11265,8 @@ SaLam
 😂		  😂
 😂			😂",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11290,15 +11281,15 @@ SaLam
 🤫	   🤫		🙊		  🙊
 🤡🤡🤡		  😗			 🙊",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
 💋💋💋		  💋		 💋
 😏		 😏	  😏	   😏
 😏		   😏	😏	 😏
-😄		😄	   😄   😄
+😄		😄	   ??   😄
 😄😄😄		  😄😄
 🤘		 🤘	  ??   🤘
 🤘		   🤘	🤘	  🤘
@@ -11306,8 +11297,8 @@ SaLam
 🙊	   🙊		🙊		  🙊
 💋💋💋		  💋			💋",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11322,8 +11313,8 @@ SaLam
 💋	   💋		💋		  💋
 💋💋??		  💋			💋",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11338,8 +11329,8 @@ SaLam
 💋	   💋		💋		  💋
 😏😏😏		  😏			😏",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11355,8 +11346,8 @@ SaLam
 😏😏😏		  😏			😏
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11372,8 +11363,8 @@ SaLam
 😄😄😄		  😄			😄
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11389,8 +11380,8 @@ SaLam
 😄😄😄		  😄			😄
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11406,8 +11397,8 @@ SaLam
 🤘🤘🤘		  🤘			🤘
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11423,8 +11414,8 @@ SaLam
 🤘🤘🤘		  🤘			🤘
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11440,8 +11431,8 @@ SaLam
 🙊🙊🙊		  🙊			🙊
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11457,8 +11448,8 @@ SaLam
 🙊🙊🙊		  🙊			🙊
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11474,8 +11465,8 @@ SaLam
 💋💋💋		  💋			💋
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11491,8 +11482,8 @@ SaLam
 💋💋💋		  💋			💋
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11508,8 +11499,8 @@ SaLam
 😏😏😏		  😏			😏
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11525,8 +11516,8 @@ SaLam
 😏😏😏		  😏			😏
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11542,8 +11533,8 @@ SaLam
 😄😄😄		  😄			😄
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11559,8 +11550,8 @@ SaLam
 😄😄😄		  😄			😄
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11576,8 +11567,8 @@ SaLam
 🤘🤘🤘		  🤘			🤘
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11593,8 +11584,8 @@ SaLam
 🤘🤘🤘		  🤘			🤘
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11610,8 +11601,8 @@ SaLam
 🙊🙊🙊		  🙊			🙊
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11627,8 +11618,8 @@ SaLam
 🙊🙊🙊		  🙊			🙊
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11644,8 +11635,8 @@ SaLam
 💋💋💋		  💋			💋
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11661,8 +11652,8 @@ SaLam
 💋💋💋		  💋			💋
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11678,8 +11669,8 @@ SaLam
 😏😏😏		  😏			😏
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11695,8 +11686,8 @@ SaLam
 😏😏😏		  😏			😏
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11712,8 +11703,8 @@ SaLam
 😄😄😄		  😄			😄
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11729,8 +11720,8 @@ SaLam
 😄😄😄		  😄			😄
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11746,8 +11737,8 @@ SaLam
 🤘🤘🤘		  🤘			🤘
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11763,8 +11754,8 @@ SaLam
 🤘🤘🤘		  🤘			🤘
 ",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
@@ -11783,37 +11774,37 @@ SaLam
 					]);
 				}
 				if ($text == "زنبور2" or $text == "viz2") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏥__________🏃‍♂️______________🐝",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏥______🏃‍♂️_______🐝",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏥______🏃‍♂️_____🐝",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏥___🏃‍♂️___🐝",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏥_🏃‍♂️_🐝",
 					]);
-					yield $this->sleep(0.4);
-					yield $this->messages->editMessage([
+					 $this->sleep(0.4);
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "در رفت عه☹️🐝",
@@ -11821,112 +11812,112 @@ SaLam
 				}
 
 				if ($text == "زنبور" or $text == "vizviz") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂??_______🏃😱😳🚶‍♂________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥_______________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥______________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥_____________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥____________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥___________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥__________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥_________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥________🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥_______🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥______🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥____🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥___🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥__🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "🏃‍♂😥_🐝",
 					]);
-					yield $this->sleep(0.4);
+					 $this->sleep(0.4);
 
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "👨‍🦽😭🥺",
@@ -11941,7 +11932,7 @@ SaLam
 				) {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
 
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -12000,7 +11991,7 @@ SaLam
 					preg_match("/^[\/\#\!]?(spam) ([0-9]+) (.*)$/i", $text, $m);
 					$count = $m[2];
 					$txt = $m[3];
-					yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "ꜱᴘᴀᴍɪɴɢ ⁅ $m[3] ⁆ ᴛɪᴍᴇꜱ ᴡᴏʀᴅ ⁅ $m[2] ⁆ ɴᴏᴡ :-)",'parse_mode'=>"MarkDown"]);
+					 $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "ꜱᴘᴀᴍɪɴɢ ⁅ $m[3] ⁆ ᴛɪᴍᴇꜱ ᴡᴏʀᴅ ⁅ $m[2] ⁆ ɴᴏᴡ :-)",'parse_mode'=>"MarkDown"]);
 					for($i=1; $i <= $count; $i++){
 						$this->messages->sendMessage(['peer' => $peer, 'message' => $txt ]);
 					}
@@ -12011,7 +12002,7 @@ SaLam
 					$count = $m[2];
 					$txt = $m[3];
 					$spm = "";
-					yield $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "ꜰʟᴏᴏᴅɪɴɢ ⁅ $m[3] ⁆ ᴛɪᴍᴇꜱ ᴡᴏʀᴅ ⁅ $m[2] ⁆ ɴᴏᴡ :-)",'parse_mode'=>"MarkDown"]);
+					 $this->messages->editMessage(['peer' => $peer,'id' => $msg_id,'message' => "ꜰʟᴏᴏᴅɪɴɢ ⁅ $m[3] ⁆ ᴛɪᴍᴇꜱ ᴡᴏʀᴅ ⁅ $m[2] ⁆ ɴᴏᴡ :-)",'parse_mode'=>"MarkDown"]);
 					for($i=1; $i <= $count; $i++){
 						$spm .= " $txt \n";
 					}
@@ -12020,7 +12011,7 @@ SaLam
 				if (preg_match("/^[\/\#\!]?(cor) (.*)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(cor) (.*)$/i", $text, $SisSeLf);
 					$con = str_replace(" ", "%20", $SisSeLf[2]);
-					$corona = file_get_contents(
+					$corona = Amp\File\read(
 						"https://www.worldometers.info/coronavirus/country/$con/"
 					);
 					// ===== Regex ===== \\
@@ -12033,7 +12024,7 @@ SaLam
 					$cases = str_replace(" ", "", $res2[2][1]);
 					$re = $res3[1][0];
 					$re2 = str_replace('"', "", $re);
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
@@ -12052,25 +12043,25 @@ SaLam
 				if (preg_match("/^[\/\#\!]?(najva|نجوا) (.*)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(najva|نجوا) (.*)$/i", $text, $m);
 					if ($type3 == "supergroup" || $type3 == "chat") {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» . . . !",
 							"parse_mode" => "markdown",
 						]);
-						$gm = (yield $this->channels->getMessages([
+						$gm = ( $this->channels->getMessages([
 							"channel" => $peer,
 							"id" => [$msg_id],
 						]));
 						$team = $gm["messages"][0]["reply_to_msg_id"];
-						$GM = (yield $this->channels->getMessages([
+						$GM = ( $this->channels->getMessages([
 							"channel" => $peer,
 							"id" => [$team],
 						]));
 						$s_t = $GM["messages"][0]["from_id"];
 						$mu = $m[2];
 						if (mb_strlen($mu) > 190) {
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" =>
@@ -12083,7 +12074,7 @@ SaLam
 							"channel" => $peer,
 							"id" => [$msg_id],
 						]);
-						$messages_BotResults = (yield $this->messages->getInlineBotResults(
+						$messages_BotResults = ( $this->messages->getInlineBotResults(
 							[
 								"bot" => "@NajvaOrgBot",
 								"peer" => $peer,
@@ -12094,7 +12085,7 @@ SaLam
 						$query_id = $messages_BotResults["query_id"];
 						$query_res_id =
 							$messages_BotResults["results"][0]["id"];
-						yield $this->messages->sendInlineBotResult([
+						 $this->messages->sendInlineBotResult([
 							"silent" => true,
 							"background" => false,
 							"clear_draft" => true,
@@ -12120,14 +12111,14 @@ SaLam
 						$type3 == "user"
 					) {
 						$mu = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ʀᴇᴄᴇɪᴠɪɴɢ ( `$m[2]` ) ᴄɪᴛʏ ᴡᴇᴀᴛʜᴇʀ ɪɴғᴏʀᴍᴀᴛɪᴏɴ . . . !",
 							"parse_mode" => "markdown",
 						]);
 						$res = json_decode(
-							file_get_contents(
+							Amp\File\read(
 								"https://api.codebazan.ir/weather/?city=$mu"
 							),
 							true
@@ -12139,7 +12130,7 @@ SaLam
 							$so = $res["result"]["سرعت باد"];
 							$ha = $res["result"]["وضعیت هوا"];
 							$up = $res["result"]["به روز رسانی"];
-							yield $this->messages->sendMessage([
+							 $this->messages->sendMessage([
 								"peer" => $peer,
 								"message" => "
 🛤 استان » **$os**
@@ -12153,7 +12144,7 @@ SaLam
 								"reply_to_msg_id" => $msg_id,
 							]);
 						} else {
-							yield $this->messages->sendMessage([
+							 $this->messages->sendMessage([
 								"peer" => $peer,
 								"message" => "» ᴇɴᴛᴇʀᴇᴅ ᴄɪᴛʏ ɪs ɪɴᴠᴀʟɪᴅ !",
 								"parse_mode" => "markdown",
@@ -12169,15 +12160,15 @@ if( preg_match( '/^[\/\#\!\.]?(dl|download|wait|دانلود|دانلود بشه
 if (isset($update['message']['reply_to_msg_id'])) {
 $rp = $update['message']['reply_to_msg_id'];
 if($type3 == "user"){
-$messeg = yield $this->messages->getMessages(['id' => [$rp],]);
+$messeg =  $this->messages->getMessages(['id' => [$rp],]);
 }
 if (isset($messeg['messages'][0]['media']['photo'])) {
 $media = $messeg['messages'][0]['media'];
 $captcha = rand(111111,999999);
 $ca = substr($captcha, 0, 7);
-yield $this->downloadToFile($media, "files/$ca.png");
-# yield $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => "» درحال ذخیره عکس زمان دار . . . !", 'parse_mode'=>"MarkDown"]);
-yield $this->messages->sendMedia([
+ $this->downloadToFile($media, "files/$ca.png");
+#  $this->messages->editMessage(['peer' => $peer, 'id' => $msg_id, 'message' => "» درحال ذخیره عکس زمان دار . . . !", 'parse_mode'=>"MarkDown"]);
+ $this->messages->sendMedia([
 'peer' => $admin, 
 'media' =>['_' => 'inputMediaUploadedDocument', 
 'file' => "files/$ca.png", 
@@ -12194,7 +12185,7 @@ yield $this->messages->sendMedia([
 					)
 				) {
 					if ($type3 == "user") {
-						$doni = (yield $this->messages->getMessages([
+						$doni = ( $this->messages->getMessages([
 							"peer" => $peer,
 							"id" => [
 								$update["message"]["reply_to"][
@@ -12203,7 +12194,7 @@ yield $this->messages->sendMedia([
 							],
 						]));
 					} elseif ($type3 == "supergroup") {
-						$doni = (yield $this->channels->getMessages([
+						$doni = ( $this->channels->getMessages([
 							"channel" => $peer,
 							"id" => [
 								$update["message"]["reply_to"][
@@ -12217,15 +12208,15 @@ yield $this->messages->sendMedia([
 						: "none";
 					if ($file != "none") {
 						$r = rand();
-						$output_file_name = (yield $this->downloadToFile(
+						$output_file_name = ( $this->downloadToFile(
 							$file,
 							"files/SK_$r.png"
 						));
-						/*yield $this->messages->sendMessage([
+						/* $this->messages->sendMessage([
 'peer' => $peer,'reply_to_msg_id'=>$msg_id,
 'message' => " با موفقیت دانلود شد",
 ]);*/
-						yield $this->messages->sendMedia([
+						 $this->messages->sendMedia([
 							"peer" => $admin,
 							"media" => [
 								"_" => "inputMediaUploadedDocument",
@@ -12249,7 +12240,7 @@ yield $this->messages->sendMedia([
 					if (!isset($data["answering"][$txxt])) {
 						$data["answering"][$txxt] = $answeer;
 						file_put_contents("data.json", json_encode($data, 448));
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴛʜᴇ ɴᴇᴡ ᴡᴏʀᴅ ɴᴏᴡ ɪɴ ᴀɴsᴡᴇʀ ʟɪsᴛ !
@@ -12258,7 +12249,7 @@ yield $this->messages->sendMedia([
 							"parse_mode" => "MarkDown",
 						]);
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴀʟʀᴇᴀᴅʏ ᴇxɪsᴛs ɪɴ ᴛʜᴇ ᴀɴsᴡᴇʀ ʟɪsᴛ !",
@@ -12279,14 +12270,14 @@ yield $this->messages->sendMedia([
 					if (isset($data["answering"][$txxt])) {
 						unset($data["answering"][$txxt]);
 						file_put_contents("data.json", json_encode($data, 448));
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ ᴀɴsᴡᴇʀ ʟɪsᴛ !",
 							"parse_mode" => "MarkDown",
 						]);
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴛʜᴇ ( `$txxt` ) ᴡᴏʀᴅ ᴡᴀsɴ'ᴛ ɪɴ ᴀɴsᴡᴇʀ ʟɪsᴛ !",
@@ -12304,14 +12295,14 @@ yield $this->messages->sendMedia([
 							$txxxt .= "• $counter • `$k` » `$ans` \n";
 							$counter++;
 						}
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "$txxxt",
 							"parse_mode" => "MarkDown",
 						]);
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴀɴsᴡᴇʀ ʟɪsᴛ ɪs ᴇᴍᴘᴛʏ !",
@@ -12328,7 +12319,7 @@ yield $this->messages->sendMedia([
 				) {
 					$data["answering"] = [];
 					file_put_contents("data.json", json_encode($data, 448));
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴀɴsᴡᴇʀ ʟɪsᴛ ɴᴏᴡ ɪs ᴇᴍᴘᴛʏ !",
@@ -12346,7 +12337,7 @@ yield $this->messages->sendMedia([
 				) {
 					if ($replyToId) {
 						if ($type3 == "supergroup" or $type3 == "chat") {
-							$gmsg = (yield $this->channels->getMessages([
+							$gmsg = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$msg_id],
 							]));
@@ -12354,7 +12345,7 @@ yield $this->messages->sendMedia([
 								$gmsg["messages"][0]["reply_to"][
 									"reply_to_msg_id"
 								];
-							$gms = (yield $this->channels->getMessages([
+							$gms = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$messag1],
 							]));
@@ -12367,18 +12358,18 @@ yield $this->messages->sendMedia([
 									json_encode($data, 448)
 								);
 
-								yield $this->contacts->unblock([
+								 $this->contacts->unblock([
 									"id" => $messag,
 								]);
 
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ᴛʜɪs ᴜsᴇʀ [$messag](tg://user?id=$messag) ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ ᴇɴᴇᴍʏ ʟɪsᴛ !",
 									"parse_mode" => "MarkDown",
 								]);
 							} else {
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ᴛʜɪs ᴜsᴇʀ [$messag](tg://user?id=$messag) ɪs ɴᴏᴛ ɪɴ ᴛʜᴇ ᴇɴᴇᴍʏ ʟɪsᴛ !",
@@ -12399,16 +12390,16 @@ yield $this->messages->sendMedia([
 						unset($data["enemies"][$k]);
 						file_put_contents("data.json", json_encode($data, 448));
 
-						yield $this->contacts->unblock(["id" => $peer]);
+						 $this->contacts->unblock(["id" => $peer]);
 
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴛʜɪs [ᴜsᴇʀ](tg://user?id=$peer) ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ ᴇɴᴇᴍʏ ʟɪsᴛ !",
 							"parse_mode" => "MarkDown",
 						]);
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴛʜɪs [ᴜsᴇʀ](tg://user?id=$peer) ɪs ɴᴏᴛ ɪɴ ᴛʜᴇ ᴇɴᴇᴍʏ ʟɪsᴛ !",
@@ -12425,7 +12416,7 @@ yield $this->messages->sendMedia([
 				) {
 					if ($replyToId) {
 						if ($type3 == "supergroup" or $type3 == "chat") {
-							$gmsg = (yield $this->channels->getMessages([
+							$gmsg = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$msg_id],
 							]));
@@ -12433,7 +12424,7 @@ yield $this->messages->sendMedia([
 								$gmsg["messages"][0]["reply_to"][
 									"reply_to_msg_id"
 								];
-							$gms = (yield $this->channels->getMessages([
+							$gms = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$messag1],
 							]));
@@ -12446,14 +12437,14 @@ yield $this->messages->sendMedia([
 										json_encode($data, 448)
 									);
 								}
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ᴛʜɪs [ᴜsᴇʀ](tg://user?id=$messag) ɴᴏᴡ ɪɴ ᴇɴᴇᴍʏ ʟɪsᴛ !",
 									"parse_mode" => "MarkDown",
 								]);
 							} else {
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ᴛʜɪs [ᴜsᴇʀ](tg://user?id=$messag) ᴡᴀs ɪɴ ᴇɴᴇᴍʏ ʟɪsᴛ !",
@@ -12472,14 +12463,14 @@ yield $this->messages->sendMedia([
 					if (!in_array($peer, $data["enemies"])) {
 						$data["enemies"][] = $peer;
 						file_put_contents("data.json", json_encode($data, 448));
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "ᴜsᴇʀ [ᴜsᴇʀ](tg://user?id=$peer) ɴᴏᴡ ɪɴ ᴇɴᴇᴍʏ ʟɪsᴛ !",
 							"parse_mode" => "MarkDown",
 						]);
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "ᴛʜɪs ᴜsᴇʀ [$peer](tg://user?id=$peer) ᴡᴀs ɪɴ ᴇɴᴇᴍʏ ʟɪsᴛ !",
@@ -12490,7 +12481,7 @@ yield $this->messages->sendMedia([
 				// List
 				if (preg_match("/^[\/\#\!]?(enemylist)$/i", $text)) {
 					if (count($data["enemies"]) > 0) {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ɢᴇᴛᴛɪɴɢ ᴛʜᴇ ᴇɴᴇᴍʏ ʟɪsᴛ . . . !",
@@ -12504,14 +12495,14 @@ yield $this->messages->sendMedia([
 							$txxxt .= "• $counter • [$ene](tg://user?id=$ene) \n";
 							$counter++;
 						}
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "$txxxt",
 							"parse_mode" => "MarkDown",
 						]);
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴇɴᴇᴍʏ ʟɪsᴛ ɪs ᴇᴍᴘᴛʏ !",
@@ -12528,7 +12519,7 @@ yield $this->messages->sendMedia([
 				) {
 					$data["enemies"] = [];
 					file_put_contents("data.json", json_encode($data, 448));
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴇɴᴇᴍʏ ʟɪsᴛ ɴᴏᴡ ɪs ᴇᴍᴘᴛʏ !",
@@ -12546,7 +12537,7 @@ yield $this->messages->sendMedia([
 				) {
 					if ($replyToId) {
 						if ($type3 == "supergroup" or $type3 == "chat") {
-							$gmsg = (yield $this->channels->getMessages([
+							$gmsg = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$msg_id],
 							]));
@@ -12554,7 +12545,7 @@ yield $this->messages->sendMedia([
 								$gmsg["messages"][0]["reply_to"][
 									"reply_to_msg_id"
 								];
-							$gms = (yield $this->channels->getMessages([
+							$gms = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$messag1],
 							]));
@@ -12567,18 +12558,18 @@ yield $this->messages->sendMedia([
 									json_encode($data, 448)
 								);
 
-								yield $this->contacts->unblock([
+								 $this->contacts->unblock([
 									"id" => $messag,
 								]);
 
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ᴛʜɪs ᴜsᴇʀ [$messag](tg://user?id=$messag) ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ sɪʟᴇɴᴛ ʟɪsᴛ !",
 									"parse_mode" => "MarkDown",
 								]);
 							} else {
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ᴛʜɪs ᴜsᴇʀ [$messag](tg://user?id=$messag) ɪs ɴᴏᴛ ɪɴ ᴛʜᴇ sɪʟᴇɴᴛ ʟɪsᴛ !",
@@ -12597,7 +12588,7 @@ yield $this->messages->sendMedia([
 				) {
 					if ($replyToId) {
 						if ($type3 == "supergroup" or $type3 == "chat") {
-							$gmsg = (yield $this->channels->getMessages([
+							$gmsg = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$msg_id],
 							]));
@@ -12605,7 +12596,7 @@ yield $this->messages->sendMedia([
 								$gmsg["messages"][0]["reply_to"][
 									"reply_to_msg_id"
 								];
-							$gms = (yield $this->channels->getMessages([
+							$gms = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$messag1],
 							]));
@@ -12618,14 +12609,14 @@ yield $this->messages->sendMedia([
 										json_encode($data, 448)
 									);
 								}
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ᴛʜɪs ᴜsᴇʀ [$messag](tg://user?id=$messag) ɴᴏᴡ ɪɴ sɪʟᴇɴᴛ ʟɪsᴛ !",
 									"parse_mode" => "MarkDown",
 								]);
 							} else {
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ᴛʜɪs ᴜsᴇʀ [$messag](tg://user?id=$messag) ᴡᴀs ɪɴ sɪʟᴇɴᴛ ʟɪsᴛ !",
@@ -12638,7 +12629,7 @@ yield $this->messages->sendMedia([
 				// List
 				if (preg_match("/^[\/\#\!]?(silentlist|خفه لیست)$/i", $text)) {
 					if (count($data["silents"]) > 0) {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ɢᴇᴛᴛɪɴɢ ᴛʜᴇ sɪʟᴇɴᴛ ʟɪsᴛ . . . !",
@@ -12652,14 +12643,14 @@ yield $this->messages->sendMedia([
 							$txxxt .= "• $counter • [$ene](tg://user?id=$ene) \n";
 							$counter++;
 						}
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "$txxxt",
 							"parse_mode" => "MarkDown",
 						]);
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» sɪʟᴇɴᴛ ʟɪsᴛ ɪs ᴇᴍᴘᴛʏ !",
@@ -12676,7 +12667,7 @@ yield $this->messages->sendMedia([
 				) {
 					$data["silents"] = [];
 					file_put_contents("data.json", json_encode($data, 448));
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» sɪʟᴇɴᴛ ʟɪsᴛ ɴᴏᴡ ɪs ᴇᴍᴘᴛʏ !",
@@ -12686,14 +12677,14 @@ yield $this->messages->sendMedia([
 				//============== Ping ==============
 				if (preg_match('/^[\/\#\!\.]?(ping|pimg|پینگ)$/si', $text)) {
 					$load = sys_getloadavg();
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "server ping : <b>$load[0]</b>",
 						"parse_mode" => "html",
 					]);
 				}
 				if (preg_match('/^[\/\#\!\.]?(bot|ربات)$/si', $text)) {
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "Bot Remaining Time $remaining <b>( until $deadline )</b>",
 						"parse_mode" => "html",
@@ -12705,10 +12696,10 @@ yield $this->messages->sendMedia([
 						$text
 					)
 				) {
-					$LatestVersion = file_get_contents(
+					$LatestVersion = Amp\File\read(
 						"https://SK-54.github.io/ExternalFiles/SisSeLf/version.txt"
 					);
-					$CurrentVersion = file_get_contents("oth/version.txt");
+					$CurrentVersion = Amp\File\read("oth/version.txt");
 					if ($LatestVersion != $CurrentVersion) {
 						$t = "Latest Version Is **$LatestVersion**, Your Bot Current Version Is **$CurrentVersion** ⚠️ , Use  `/update`  Command To Update Your Bot.
 **@SisTan_KinG ～ @SisSeLf**";
@@ -12717,7 +12708,7 @@ yield $this->messages->sendMedia([
 **Your Bot is Up To Date ✅
 @SisTan_KinG ～ @SisSeLf**";
 					}
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => $t,
 						"parse_mode" => "markdown",
@@ -12729,10 +12720,10 @@ yield $this->messages->sendMedia([
 						$text
 					)
 				) {
-					$LatestVersion = file_get_contents(
+					$LatestVersion = Amp\File\read(
 						"https://SK-54.github.io/ExternalFiles/SisSeLf/version.txt"
 					);
-					$CurrentVersion = file_get_contents("oth/version.txt");
+					$CurrentVersion = Amp\File\read("oth/version.txt");
 					if ($LatestVersion != $CurrentVersion) {
 						$t = "Updating ... Result will be sent to @UnK37 971621004
 **@SisTan_KinG ～ @SisSeLf**";
@@ -12741,7 +12732,7 @@ yield $this->messages->sendMedia([
 						$t = "**Your Bot is Up To Date ✅
 @SisTan_KinG ～ @SisSeLf**";
 					}
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => $t,
 						"parse_mode" => "markdown",
@@ -12749,7 +12740,7 @@ yield $this->messages->sendMedia([
 				}
 				//================ Restart ==================
 				if (preg_match('/^[\/\#\!\.]?(restart|ریستارت)$/si', $text)) {
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => "<b>( Bot Restarted )</b>",
 						"parse_mode" => "html",
@@ -12759,7 +12750,7 @@ yield $this->messages->sendMedia([
 				//================ Usage ==================
 				if ($text == "مصرف" or $text == "usage") {
 					$mem_using = round(memory_get_usage() / 1024 / 1024, 1);
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ᴍᴇᴍᴏʀʏ ᴜsɪɴɢ : **$mem_using** MB",
@@ -12771,7 +12762,7 @@ yield $this->messages->sendMedia([
 				if (preg_match("/^[\/\#\!]?(user) (.*)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(user) (.*)$/i", $text, $m);
 					$link = $m[2];
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» [ᴄʟɪᴄᴋ ʜᴇʀᴇ](tg://user?id=$link) !",
@@ -12795,7 +12786,7 @@ yield $this->messages->sendMedia([
 					curl_close($ch);
 					$size = round($size1 / 1024 / 1024, 1);
 					if ($size <= 150) {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" =>
@@ -12807,7 +12798,7 @@ yield $this->messages->sendMedia([
 						$path = parse_url($link, PHP_URL_PATH);
 						$filename = basename($path);
 						copy($link, "files/$filename");
-						yield $this->messages->sendMedia([
+						 $this->messages->sendMedia([
 							"peer" => $peer,
 							"media" => [
 								"_" => "inputMediaUploadedDocument",
@@ -12828,14 +12819,14 @@ yield $this->messages->sendMedia([
 							"parse_mode" => "Markdown",
 						]);
 						$t = time() - $oldtime;
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "✅ Uploaded ($t" . "s)",
 						]);
 						unlink("files/$filename");
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "⚠️ خطا : حجم فایل بیشتر 150MB است!",
@@ -12844,12 +12835,12 @@ yield $this->messages->sendMedia([
 				}
 				//============== Restart & Die ==============
 				if ($text == "/die;") {
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "!.!.!.!",
 					]);
-					yield $this->restart();
+					 $this->restart();
 					die();
 				}
 				//============== Part Mode ==============
@@ -12858,12 +12849,12 @@ yield $this->messages->sendMedia([
 						if (strlen($text) < 150) {
 							$text = str_replace(" ", "‌", $text);
 							for ($T = 1; $T <= mb_strlen($text); $T++) {
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => mb_substr($text, 0, $T),
 								]);
-								yield $this->sleep(0.1);
+								 $this->sleep(0.1);
 							}
 						}
 					}
@@ -12872,10 +12863,10 @@ yield $this->messages->sendMedia([
 				if ($reversemode == "on") {
 					if ($update) {
 						$mu = str_replace(" ", "%20", $text);
-						$rev = file_get_contents(
+						$rev = Amp\File\read(
 							"https://api.codebazan.ir/strrev/?text=" . $mu
 						);
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => $rev,
@@ -12888,7 +12879,7 @@ yield $this->messages->sendMedia([
 						if (strlen($text) < 150) {
 							$text = str_replace(" ", "_", $text);
 
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "#$text",
@@ -12900,7 +12891,7 @@ yield $this->messages->sendMedia([
 				if ($boldmode == "on") {
 					if ($update) {
 						if (strlen($text) < 150) {
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "**$text**",
@@ -12913,7 +12904,7 @@ yield $this->messages->sendMedia([
 				if ($italicmode == "on") {
 					if ($update) {
 						if (strlen($text) < 150) {
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "<i>$text</i>",
@@ -12926,7 +12917,7 @@ yield $this->messages->sendMedia([
 				if ($underlinemode == "on") {
 					if ($update) {
 						if (strlen($text) < 150) {
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "<u>$text</u>",
@@ -12939,7 +12930,7 @@ yield $this->messages->sendMedia([
 				if ($deletedmode == "on") {
 					if ($update) {
 						if (strlen($text) < 150) {
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "<del>$text</del>",
@@ -12953,7 +12944,7 @@ yield $this->messages->sendMedia([
 				if ($mentionmode == "on") {
 					if ($update) {
 						if (strlen($text) < 150) {
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "[$text](tg://user?id=$admin)",
@@ -12966,19 +12957,19 @@ yield $this->messages->sendMedia([
 				if ($mention2mode == "on") {
 					if ($update) {
 						if ($type3 == "supergroup" or $type3 == "chat") {
-							$gmsg = (yield $this->channels->getMessages([
+							$gmsg = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$msg_id],
 							]));
 							$messag = $gmsg["messages"][0]["reply_to_msg_id"];
-							$g = (yield $this->channels->getMessages([
+							$g = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$messag],
 							]));
 							$id = $g["messages"][0]["from_id"];
 						}
 						if (strlen($text) < 150) {
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "[$text](tg://user?id=$id)",
@@ -12991,7 +12982,7 @@ yield $this->messages->sendMedia([
 				if ($codingmode == "on") {
 					if ($update) {
 						if (strlen($text) < 150) {
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "`$text`",
@@ -13004,17 +12995,17 @@ yield $this->messages->sendMedia([
 				if (preg_match('/^[\/\#\!\.]?(id|ایدی)$/si', $text)) {
 					if (isset($replyToId)) {
 						if ($type3 == "supergroup" or $type3 == "chat") {
-							$gmsg = (yield $this->channels->getMessages([
+							$gmsg = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$msg_id],
 							]));
 							$messag1 = $gmsg["messages"][0]["reply_to_msg_id"];
-							$gms = (yield $this->channels->getMessages([
+							$gms = ( $this->channels->getMessages([
 								"channel" => $peer,
 								"id" => [$messag1],
 							]));
 							$messag = $gms["messages"][0]["from_id"];
-							yield $this->messages->editMessage([
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "» ʏᴏᴜʀ ɪᴅ : `$messag`",
@@ -13022,7 +13013,7 @@ yield $this->messages->sendMedia([
 							]);
 						} else {
 							if ($type3 == "user") {
-								yield $this->messages->editMessage([
+								 $this->messages->editMessage([
 									"peer" => $peer,
 									"id" => $msg_id,
 									"message" => "» ʏᴏᴜʀ ɪᴅ : `$peer`",
@@ -13031,7 +13022,7 @@ yield $this->messages->sendMedia([
 							}
 						}
 					} else {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ɢʀᴏᴜᴘ ɪᴅ : `$peer`",
@@ -13048,14 +13039,14 @@ yield $this->messages->sendMedia([
 					);
 					$count = $m[2];
 					$txt = $m[3];
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ғʟᴏᴏᴅɪɴɢ ᴛᴇxᴛ ( `$txt` ) ᴄᴏᴜɴᴛ ( `$count` ) . . . !",
 						"parse_mode" => "markdown",
 					]);
 					for ($i = 1; $i <= $count; $i++) {
-						yield $this->messages->sendMessage([
+						 $this->messages->sendMessage([
 							"peer" => $peer,
 							"message" => $txt,
 						]);
@@ -13064,7 +13055,7 @@ yield $this->messages->sendMedia([
 				//================ Cleaner ================
 				if ($text == "clean all" or $text == "پاکسازی کلی") {
 					if ($type3 == "supergroup" || $type3 == "chat") {
-						yield $this->messages->sendMessage([
+						 $this->messages->sendMessage([
 							"peer" => $peer,
 							"reply_to_msg_id" => $msg_id,
 							"message" =>
@@ -13076,7 +13067,7 @@ yield $this->messages->sendMedia([
 						$chunk = array_chunk($array, 100);
 						foreach ($chunk as $v) {
 							sleep(0.05);
-							yield $this->channels->deleteMessages([
+							 $this->channels->deleteMessages([
 								"channel" => $peer,
 								"id" => $v,
 							]);
@@ -13094,7 +13085,7 @@ yield $this->messages->sendMedia([
 							"http://www.beytoote.com/images/Hafez/" .
 							rand(1, 149) .
 							".gif";
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" =>
@@ -13128,7 +13119,7 @@ yield $this->messages->sendMedia([
 					) {
 						preg_match(
 							'~<p class="">(.+?)</p>~si',
-							file_get_contents(
+							Amp\File\read(
 								"https://www.vajehyab.com/?q=" .
 									urlencode($match)
 							),
@@ -13146,14 +13137,14 @@ yield $this->messages->sendMedia([
 								)
 							)
 						);
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴍᴇᴀɴɪɴɢ ( `$match` ) ғᴀʀsɪ ᴡᴏʀᴅ . . . !",
 							"parse_mode" => "MarkDown",
 						]);
 						if ($p != null) {
-							yield $this->messages->sendMessage([
+							 $this->messages->sendMessage([
 								"peer" => $peer,
 								"message" => "» کلمه اولیه : `$match`
 » معنی :
@@ -13162,7 +13153,7 @@ yield $this->messages->sendMedia([
 								"reply_to_msg_id" => $msg_id,
 							]);
 						} else {
-							yield $this->messages->sendMessage([
+							 $this->messages->sendMessage([
 								"peer" => $peer,
 								"message" => "» ʏᴏᴜʀ ᴡᴏʀᴅ ɴᴏᴛ ғᴏᴜɴᴅ !",
 								"parse_mode" => "MarkDown",
@@ -13182,7 +13173,7 @@ yield $this->messages->sendMedia([
 						$mu = $m[2];
 						$mu = str_replace("https://github.com/", "", $mu);
 						$mu = str_replace("http://github.com/", "", $mu);
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ɢᴇᴛᴛɪɴɢ ᴛʜᴇ ( `$mu` ) ɢɪᴛʜᴜʙ ғɪʟᴇ . . . ! ",
@@ -13210,26 +13201,26 @@ yield $this->messages->sendMedia([
 					$text == "!unblock"
 				) {
 					if ($type3 == "supergroup" or $type3 == "chat") {
-						$gmsg = (yield $this->channels->getMessages([
+						$gmsg = ( $this->channels->getMessages([
 							"channel" => $peer,
 							"id" => [$msg_id],
 						]));
 						$messag1 = $gmsg["messages"][0]["reply_to_msg_id"];
-						$gms = (yield $this->channels->getMessages([
+						$gms = ( $this->channels->getMessages([
 							"channel" => $peer,
 							"id" => [$messag1],
 						]));
 						$messag = $gms["messages"][0]["from_id"];
-						yield $this->contacts->unblock(["id" => $messag]);
-						yield $this->messages->editMessage([
+						 $this->contacts->unblock(["id" => $messag]);
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴜɴʙʟᴏᴄᴋᴇᴅ !",
 						]);
 					} else {
 						if ($type3 == "user") {
-							yield $this->contacts->unblock(["id" => $peer]);
-							yield $this->messages->editMessage([
+							 $this->contacts->unblock(["id" => $peer]);
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "» ᴜɴʙʟᴏᴄᴋᴇᴅ !",
@@ -13244,26 +13235,26 @@ yield $this->messages->sendMedia([
 					$text == "!block"
 				) {
 					if ($type3 == "supergroup" or $type3 == "chat") {
-						$gmsg = (yield $this->channels->getMessages([
+						$gmsg = ( $this->channels->getMessages([
 							"channel" => $peer,
 							"id" => [$msg_id],
 						]));
 						$messag1 = $gmsg["messages"][0]["reply_to_msg_id"];
-						$gms = (yield $this->channels->getMessages([
+						$gms = ( $this->channels->getMessages([
 							"channel" => $peer,
 							"id" => [$messag1],
 						]));
 						$messag = $gms["messages"][0]["from_id"];
-						yield $this->contacts->block(["id" => $messag]);
-						yield $this->messages->editMessage([
+						 $this->contacts->block(["id" => $messag]);
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ʙʟᴏᴄᴋᴇᴅ !",
 						]);
 					} else {
 						if ($type3 == "user") {
-							yield $this->contacts->block(["id" => $peer]);
-							yield $this->messages->editMessage([
+							 $this->contacts->block(["id" => $peer]);
+							 $this->messages->editMessage([
 								"peer" => $peer,
 								"id" => $msg_id,
 								"message" => "» ʙʟᴏᴄᴋᴇᴅ !",
@@ -13280,17 +13271,17 @@ yield $this->messages->sendMedia([
 						$type3 == "user"
 					) {
 						$mu = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ʀᴇᴠᴇʀsɪɴɢ ᴛʜᴇ ( `$mu` ) ᴛᴇxᴛ . . . ! ",
 							"parse_mode" => "MarkDown",
 						]);
 						$mu = str_replace(" ", "%20", $mu);
-						$rev = file_get_contents(
+						$rev = Amp\File\read(
 							"https://api.codebazan.ir/strrev/?text=" . $mu
 						);
-						yield $this->messages->sendMessage([
+						 $this->messages->sendMessage([
 							"peer" => $peer,
 							"message" => $rev,
 							"parse_mode" => "MarkDown",
@@ -13307,7 +13298,7 @@ yield $this->messages->sendMedia([
 						$type3 == "user"
 					) {
 						$matn = strtoupper("$m[2]");
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ʙᴜɪʟᴅɪɴɢ 10 ғᴀʀsɪ ғᴏɴᴛs ғᴏʀ ( `$m[2]` ) ɴᴀᴍᴇ . . . ! ",
@@ -13720,7 +13711,7 @@ yield $this->messages->sendMedia([
 8 - `$g`
 9 - `$h`
 10 - `$i`";
-						yield $this->messages->sendMessage([
+						 $this->messages->sendMessage([
 							"peer" => $peer,
 							"message" => "$readyfont
 
@@ -13737,14 +13728,14 @@ yield $this->messages->sendMedia([
 						$type3 == "chat" ||
 						$type3 == "user"
 					) {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ɢᴇᴛᴛɪɴɢ ᴄᴜʀʀᴇɴᴄʏ ᴘʀɪᴄᴇs . . . !",
 							"parse_mode" => "MarkDown",
 						]);
 						$arz = json_decode(
-							file_get_contents("https://r2f.ir/web/arz.php"),
+							Amp\File\read("https://r2f.ir/web/arz.php"),
 							true
 						);
 						$yoro = $arz["0"]["price"];
@@ -13778,7 +13769,7 @@ yield $this->messages->sendMedia([
 						$souria = $arz["28"]["price"];
 						$dolar = $arz["29"]["price"];
 						$talaa = json_decode(
-							file_get_contents("https://r2f.ir/web/tala.php"),
+							Amp\File\read("https://r2f.ir/web/tala.php"),
 							true
 						);
 						$tala = $talaa["4"]["price"];
@@ -13788,7 +13779,7 @@ yield $this->messages->sendMedia([
 						$rob = $talaa["2"]["price"];
 						$geram = $talaa["3"]["price"];
 						$bahar = $talaa["6"]["price"];
-						$get = file_get_contents(
+						$get = Amp\File\read(
 							"http://api.novateamco.ir/arz/"
 						);
 						$result = json_decode($get, true);
@@ -13875,7 +13866,7 @@ yield $this->messages->sendMedia([
 » طلای 18 عیار : `$tala18` ريال
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 ";
-						yield $this->messages->sendMessage([
+						 $this->messages->sendMessage([
 							"peer" => $peer,
 							"message" => $prckol,
 							"parse_mode" => "markdown",
@@ -13893,14 +13884,14 @@ yield $this->messages->sendMedia([
 						$type3 == "user"
 					) {
 						$matn = strtoupper("$m[2]");
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ʙᴜɪʟᴅɪɴɢ 125 ғᴏɴᴛs ғᴏʀ ( `$m[2]` ) ɴᴀᴍᴇ . . . ! ",
 							"parse_mode" => "MarkDown",
 						]);
 						$mu = str_replace(" ", "%20", $m[2]);
-						$fontss = file_get_contents(
+						$fontss = Amp\File\read(
 							"https://api.codebazan.ir/font/?text=" . $mu
 						);
 						$fontha = json_decode($fontss, true);
@@ -13993,7 +13984,7 @@ yield $this->messages->sendMedia([
 						$Font_2 = [
 							"𝑄",
 							"𝑊",
-							"𝐸",
+							"??",
 							"𝑅",
 							"𝑇",
 							"𝑌",
@@ -15104,7 +15095,7 @@ yield $this->messages->sendMedia([
 123 - `$ah`
 124 - `$am`
 125 - `$pol`";
-						yield $this->messages->sendMessage([
+						 $this->messages->sendMessage([
 							"peer" => $peer,
 							"message" => "$readyfont
 
@@ -15123,13 +15114,13 @@ yield $this->messages->sendMedia([
 						$type3 == "user"
 					) {
 						$mu = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» sᴇᴀʀᴄʜɪɴɢ ғᴏʀ ( `$m[2]` ) ᴀᴘᴋ . . . !",
 							"parse_mode" => "markdown",
 						]);
-						$messages_BotResults = (yield $this->messages->getInlineBotResults(
+						$messages_BotResults = ( $this->messages->getInlineBotResults(
 							[
 								"bot" => "@apkdl_bot",
 								"peer" => $peer,
@@ -15140,7 +15131,7 @@ yield $this->messages->sendMedia([
 						$query_id = $messages_BotResults["query_id"];
 						$query_res_id =
 							$messages_BotResults["results"][0]["id"];
-						yield $this->messages->sendInlineBotResult([
+						 $this->messages->sendInlineBotResult([
 							"silent" => true,
 							"background" => false,
 							"clear_draft" => true,
@@ -15164,7 +15155,7 @@ yield $this->messages->sendMedia([
 					
 					ob_start();
 					try {
-					(yield eval($match[2]));
+					( eval($match[2]));
 					$result .= ob_get_contents() . "\n";
 					} catch (\Throwable $e) {
 					$errors .= $e->getMessage() . "\n";
@@ -15172,7 +15163,7 @@ yield $this->messages->sendMedia([
 					
 					ob_end_clean();
 					if (empty($result)){
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 					'peer'    => $peer,
 					'message' => 'No Results ...'
 					]);
@@ -15180,7 +15171,7 @@ yield $this->messages->sendMedia([
 					}
 					$errors = !empty($errors) ? "\nErrors :\n$errors" : null;
 					$answer = "Results : \n" . $result . $errors;
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 					'peer'    => $peer,
 					'message' => $answer
 					]);
@@ -15194,13 +15185,13 @@ yield $this->messages->sendMedia([
 						$type3 == "user"
 					) {
 						$matn = strtoupper("$m[2]");
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴡʜᴏɪsɪɴɢ ( `$m[2]` ) ᴅᴏᴍᴀɪɴ . . . !",
 							"parse_mode" => "MarkDown",
 						]);
-						$get = file_get_contents(
+						$get = Amp\File\read(
 							"http://api.codebazan.ir/whois/index.php?type=json&domain=" .
 								$matn
 						);
@@ -15214,7 +15205,7 @@ yield $this->messages->sendMedia([
 						$s2 = $dns["2"];
 						$domainresult = "ᴅᴏᴍᴀɪɴ : 
 $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : \n<b>$address</b>\n\nᴅɴs : \n$s1\n$s2";
-						yield $this->messages->sendMessage([
+						 $this->messages->sendMessage([
 							"peer" => $peer,
 							"message" => $domainresult,
 							"parse_mode" => "HTML",
@@ -15230,7 +15221,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$match
 					)
 				) {
-					$get = file_get_contents(
+					$get = Amp\File\read(
 						"http://api.novateamco.ir/age/?year=" .
 							$match[2] .
 							"&month=" .
@@ -15243,7 +15234,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "chat" ||
 						$type3 == "user"
 					) {
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ᴄᴀʟᴄᴜʟᴀᴛᴇ ᴛʜᴇ ( `$match[2]/$match[3]/$match[4]` ) ᴀɢᴇ . . . !",
@@ -15300,17 +15291,17 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "user"
 					) {
 						$mi = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ɢᴇᴛᴛɪɴɢ ᴘɪɴɢ ( `$m[2]` ) ᴡᴇʙsɪᴛᴇ . . . !",
 							"parse_mode" => "MarkDown",
 						]);
-						$r = file_get_contents(
+						$r = Amp\File\read(
 							"https://api.codebazan.ir/ping/?url=" . $mi
 						);
 						if ($r != null) {
-							yield $this->messages->sendMessage([
+							 $this->messages->sendMessage([
 								"peer" => $peer,
 								"message" => "
 » ᴘɪɴɢ ɪs <i>$r</i> !
@@ -15319,7 +15310,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 								"reply_to_msg_id" => $msg_id,
 							]);
 						} else {
-							yield $this->messages->sendMessage([
+							 $this->messages->sendMessage([
 								"peer" => $peer,
 								"message" => "
 » ʏᴏᴜʀ ᴀᴅᴅʀᴇss ɪs ɪɴᴠᴀʟɪᴅ !
@@ -15335,7 +15326,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					preg_match("/^[\/\#\!]?(scr) (.*)$/i", $text, $m);
 
 					$mi = $m[2];
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ɢᴇᴛᴛɪɴɢ sᴄʀᴇᴇɴ sʜᴏᴛ ғʀᴏᴍ ( `$m[2]` ) ᴡᴇʙsɪᴛᴇ . . . !",
@@ -15365,7 +15356,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "user"
 					) {
 						$mi = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ʙᴜɪʟᴅɪɴɢ ǫʀ ᴄᴏᴅᴇ ғʀᴏᴍ ( `$m[2]` ) ᴀᴅᴅʀᴇss . . . !",
@@ -15408,13 +15399,13 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						} else {
 							$muu = "ali";
 						}
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ʙᴜɪʟᴅɪɴɢ ғᴏʀ ( `$m[2]` ) ᴋᴀʟᴀᴍᴇ ɢᴀᴍᴇ . . . !",
 							"parse_mode" => "markdown",
 						]);
-						$messages_BotResults = (yield $this->messages->getInlineBotResults(
+						$messages_BotResults = ( $this->messages->getInlineBotResults(
 							[
 								"bot" => "@KalameBot",
 								"peer" => $peer,
@@ -15432,7 +15423,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 							$muu == 3 or
 							$muu == 4
 						) {
-							yield $this->messages->sendInlineBotResult([
+							 $this->messages->sendInlineBotResult([
 								"silent" => true,
 								"background" => false,
 								"clear_draft" => true,
@@ -15442,7 +15433,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 								"id" => "$query_res_id",
 							]);
 						} else {
-							yield $this->messages->sendMessage([
+							 $this->messages->sendMessage([
 								"peer" => $peer,
 								"message" => "» ʏᴏᴜʀ ʟᴇᴠᴇʟ ɪs ɪɴᴠᴀʟɪᴅ !",
 								"reply_to_msg_id" => $msg_id,
@@ -15459,7 +15450,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "user"
 					) {
 						$mi = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ʙᴜɪʟᴅɪɴɢ ғᴏʀ ( `$m[2]` ) ɢɪғ . . . !",
@@ -15501,7 +15492,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					) {
 						$mu = $m[2];
 						$link = "https://dynamic.brandcrowd.com/asset/logo/$mu/logo?v=4&text=$mu";
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» ɪᴄᴏɴ ʟɪɴᴋ sᴇɴᴅ ɪɴ ʏᴏᴜʀ ᴘᴠ . . . !",
@@ -15521,7 +15512,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					$mu = $m[2];
 
 					$mu = str_replace(" ", "%20", $mu);
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» ʙᴜɪʟᴅɪɴɢ ғᴏʀ ( `$m[2]` ) ɪᴄᴏɴ . . . !
@@ -15795,14 +15786,14 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					preg_match("/^[\/\#\!]?(save)$/i", $text) &&
 					isset($replyToId)
 				) {
-					$me = (yield $this->get_self());
+					$me = ( $this->getself());
 					$me_id = $me["id"];
-					yield $this->messages->forwardMessages([
+					 $this->messages->forwardMessages([
 						"from_peer" => $peer,
 						"to_peer" => $me_id,
 						"id" => [$replyToId],
 					]);
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "» sᴀᴠᴇᴅ =)",
@@ -15812,7 +15803,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 				if (preg_match("/^[\/\#\!]?(info) (.*)$/i", $text)) {
 					preg_match("/^[\/\#\!]?(info) (.*)$/i", $text, $m);
 
-					$mee = (yield $this->get_full_info($m[2]));
+					$mee = ( $this->getfullinfo($m[2]));
 					$me = $mee["User"];
 					$me_id = $me["id"];
 					$me_status = $me["status"]["_"];
@@ -15821,7 +15812,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					$me_name = $me["first_name"];
 					$me_uname = $me["username"];
 					$mes = "» ɪᴅ : `$me_id` \n\n» ɴᴀᴍᴇ : `$me_name` \n\nᴜsᴇʀɴᴀᴍᴇ : @$me_uname \n\n» sᴛᴀᴛᴜs : `$me_status` \n\n» ʙɪᴏ : `$me_bio` \n\n» ᴄᴏᴍᴍᴏɴ ɢʀᴏᴜᴘs ᴄᴏᴜɴᴛ : `$me_common`";
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => $mes,
@@ -15837,13 +15828,13 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "user"
 					) {
 						$mu = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» sᴇᴀʀᴄʜɪɴɢ ғᴏʀ ( `$m[2]` ) ᴍᴇᴍᴇ . . . !",
 							"parse_mode" => "markdown",
 						]);
-						$messages_BotResults = (yield $this->messages->getInlineBotResults(
+						$messages_BotResults = ( $this->messages->getInlineBotResults(
 							[
 								"bot" => "@Persian_Meme_Bot",
 								"peer" => $peer,
@@ -15856,7 +15847,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 							$messages_BotResults["results"][
 								rand(0, count($messages_BotResults["results"]))
 							]["id"];
-						yield $this->messages->sendInlineBotResult([
+						 $this->messages->sendInlineBotResult([
 							"silent" => true,
 							"background" => false,
 							"clear_draft" => true,
@@ -15876,13 +15867,13 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "user"
 					) {
 						$mu = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» sᴇᴀʀᴄʜɪɴɢ ғᴏʀ ( `$m[2]` ) ᴍᴜsɪᴄ . . . !",
 							"parse_mode" => "markdown",
 						]);
-						$messages_BotResults = (yield $this->messages->getInlineBotResults(
+						$messages_BotResults = ( $this->messages->getInlineBotResults(
 							[
 								"bot" => "@melobot",
 								"peer" => $peer,
@@ -15895,7 +15886,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 							$messages_BotResults["results"][
 								rand(0, count($messages_BotResults["results"]))
 							]["id"];
-						yield $this->messages->sendInlineBotResult([
+						 $this->messages->sendInlineBotResult([
 							"silent" => true,
 							"background" => false,
 							"clear_draft" => true,
@@ -15915,13 +15906,13 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "user"
 					) {
 						$mu = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» sᴇᴀʀᴄʜɪɴɢ ғᴏʀ ( `$m[2]` ) ᴘɪᴄᴛᴜʀᴇ . . . !",
 							"parse_mode" => "markdown",
 						]);
-						$messages_BotResults = (yield $this->messages->getInlineBotResults(
+						$messages_BotResults = ( $this->messages->getInlineBotResults(
 							[
 								"bot" => "@pic",
 								"peer" => $peer,
@@ -15934,7 +15925,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 							$messages_BotResults["results"][
 								rand(0, count($messages_BotResults["results"]))
 							]["id"];
-						yield $this->messages->sendInlineBotResult([
+						 $this->messages->sendInlineBotResult([
 							"silent" => true,
 							"background" => false,
 							"clear_draft" => true,
@@ -15954,13 +15945,13 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "user"
 					) {
 						$mu = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" => "» sᴇᴀʀᴄʜɪɴɢ ғᴏʀ ( `$m[2]` ) ɢɪғ . . . !",
 							"parse_mode" => "markdown",
 						]);
-						$messages_BotResults = (yield $this->messages->getInlineBotResults(
+						$messages_BotResults = ( $this->messages->getInlineBotResults(
 							[
 								"bot" => "@gif",
 								"peer" => $peer,
@@ -15973,7 +15964,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 							$messages_BotResults["results"][
 								rand(0, count($messages_BotResults["results"]))
 							]["id"];
-						yield $this->messages->sendInlineBotResult([
+						 $this->messages->sendInlineBotResult([
 							"silent" => true,
 							"background" => false,
 							"clear_draft" => true,
@@ -15993,13 +15984,13 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$type3 == "user"
 					) {
 						$mu = $m[2];
-						yield $this->messages->editMessage([
+						 $this->messages->editMessage([
 							"peer" => $peer,
 							"id" => $msg_id,
 							"message" =>
 								"» ʙᴜɪʟᴅɪɴɢ ʏᴏᴜʀ ɪɴʟɪɴᴇ ʙᴜᴛᴛᴏɴs . . . !",
 						]);
-						$messages_BotResults = (yield $this->messages->getInlineBotResults(
+						$messages_BotResults = ( $this->messages->getInlineBotResults(
 							[
 								"bot" => "@like",
 								"peer" => $peer,
@@ -16010,7 +16001,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 						$query_id = $messages_BotResults["query_id"];
 						$query_res_id =
 							$messages_BotResults["results"][0]["id"];
-						yield $this->messages->sendInlineBotResult([
+						 $this->messages->sendInlineBotResult([
 							"silent" => true,
 							"background" => false,
 							"clear_draft" => true,
@@ -16023,7 +16014,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 				}
 				//============== Info GP ==============
 				if (preg_match("/^[\/\#\!]?(gpinfo)$/i", $text)) {
-					$peer_inf = (yield $this->get_full_info($message["to_id"]));
+					$peer_inf = ( $this->getfullinfo($message["to_id"]));
 					$peer_info = $peer_inf["Chat"];
 					$peer_id = $peer_info["id"];
 					$peer_title = $peer_info["title"];
@@ -16031,13 +16022,13 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					$peer_count = $peer_inf["full"]["participants_count"];
 					$des = $peer_inf["full"]["about"];
 					$mes = "ɪᴅ : $peer_id \nᴛɪᴛʟᴇ : `$peer_title` \nᴛʏᴘᴇ : `$peer_type` \nᴍᴇᴍʙᴇʀs ᴄᴏᴜɴᴛ : `$peer_count` \nʙɪᴏ : `$des`";
-					yield $this->messages->editMessage([
+					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" =>
 							"» sʜᴇᴀʀᴄʜɪɴɢ ғᴏʀ ɢʀᴏᴜᴘ ɪɴғᴏʀᴍᴀᴛɪᴏɴ . . . !",
 					]);
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => $mes,
 						"disable_web_page_preview" => true,
@@ -16070,7 +16061,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					"🤠",
 				];
 				$word = $words[array_rand($words)];
-				yield $this->messages->sendMessage([
+				 $this->messages->sendMessage([
 					"peer" => $peer,
 					"message" => "<b>$word</b>",
 					"parse_mode" => "html",
@@ -16080,16 +16071,16 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 
 			if ($message && $data["AutoSeen"] == "on") {
 				if (intval($peer) < 0) {
-					yield $this->channels->readHistory([
+					 $this->channels->readHistory([
 						"channel" => $peer,
 						"max_id" => $message["id"],
 					]);
-					yield $this->channels->readMessageContents([
+					 $this->channels->readMessageContents([
 						"channel" => $peer,
 						"id" => [$message["id"]],
 					]);
 				} else {
-					yield $this->messages->readHistory([
+					 $this->messages->readHistory([
 						"peer" => $peer,
 						"max_id" => $message["id"],
 					]);
@@ -16113,7 +16104,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					) &&
 					$from_id != $admin
 				) {
-					yield $this->channels->deleteMessages([
+					 $this->channels->deleteMessages([
 						"channel" => $peer,
 						"id" => [$msg_id],
 					]);
@@ -16449,7 +16440,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 					$from_id != $admin
 				) {
 					$f = $fohsh[rand(0, count($fohsh) - 1)];
-					yield $this->messages->sendMessage([
+					 $this->messages->sendMessage([
 						"peer" => $peer,
 						"message" => $f,
 						"reply_to_msg_id" => $msg_id,
@@ -16463,11 +16454,30 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 		}
 	}
 }
+
 include "oth/config.php";
+if( $use_DB == true ) {
+	if( empty($DB_name) or empty($DB_user) or empty($DB_pass) )
+		die('DataBase Information Variables Are EMPTY, Edit "oth/config.php" File.');
+}
+$settings = new Settings;
 
-$bot = new \danog\MadelineProto\API("session.madeline", $settings);
-/*$new_template = file_get_contents('https://WWW.API.EvilHost.ORG/o/madeline/template/new2');
- $bot->setWebTemplate($new_template);*/
-$bot->startAndLoop(XHandler::class);
 
+
+if( $use_DB == true ) {
+	if( empty($DB_name) or empty($DB_user) or empty($DB_pass) )
+		die('DataBase Information Variables Are EMPTY, Edit "oth/config.php" File.');
+$settings->setDb(
+    (new Settings\Database\Mysql)
+        ->setMaxConnections(10)
+        ->setDatabase($DB_name)
+        ->setUsername($DB_user)
+        ->setPassword($DB_pass));
+}
+$settings->getAppInfo()
+    ->setApiId(17044113)
+    ->setApiHash('4b36c278ad18e1944a0b5efc964a3005');
+
+
+XHandler::startAndLoop('session.madeline', $settings);
 ?>
