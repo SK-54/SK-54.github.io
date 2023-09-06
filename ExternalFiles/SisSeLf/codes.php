@@ -29,14 +29,16 @@ ini_set("display_startup_errors", 1);
 
 use danog\MadelineProto\Logger;
 use danog\MadelineProto\Settings;
+use Amp\Promise;
+use danog\MadelineProto\RPCErrorException;
+
 
 
 //-----------------------------------\\
-if ( !file_exists("madeline.php") or 
-filesize('madeline.php') < 9315 or
-filesize('madeline.php') > 9315 ) {
-	copy("https://phar.madelineproto.xyz/madeline.php", "madeline.php");
+if (!is_file('madeline81.phar')) {
+copy('https://github.com/danog/MadelineProto/releases/download/8.0.0-beta64/madeline81.phar', 'madeline81.phar');
 }
+include 'madeline81.phar';
 //-----------------------------------\\
 if (!file_exists("part.txt")) {
 	file_put_contents("part.txt", "off");
@@ -82,7 +84,7 @@ if (!file_exists("data.json")) {
 	);
 }
 //-----------------------------------\\
-include "madeline.php";
+
 
 //-----------------------------------\\
 use danog\MadelineProto\API;
@@ -101,31 +103,37 @@ class XHandler extends EventHandler
 
 	public function genLoop()
 	{
+		file_put_contents('times.txt', date('H:i:s'). "
+" , FILE_APPEND);
 		if (Amp\File\read("time.txt") == "on") {
-			# $this->account->updateStatus(['offline'=> false]);
-			$time = date("H:i");
-			$day_number = date("d");
-			$month_number = date("m");
-			$year_number = date("Y");
-			$day_name = date("l");
-			$Bio = is_file("bio.txt")
-				? Amp\File\read("bio.txt")
-				: "{time} 𝚃𝚘𝙳𝚊𝚢 𝕚𝕊╱{day_name}╲➽〣{year_number}❚{month_number}❚{day_number}〣↢ @SisSeLf ～ EviLHosT.org";
-			$Bio = str_replace(
-				[
-					"{time}",
-					"{day_number}",
-					"{month_number}",
-					"{year_number}",
-					"{day_name}",
-				],
-				[$time, $day_number, $month_number, $year_number, $day_name],
-				$Bio
-			);
-			$this->account->updateProfile([
-				"last_name" => $time,
-				"about" => $Bio,
-			]);
+			$ReadRandoms = json_decode(file_get_contents("random.json"), true);
+			$first_name = $ReadRandoms['name'][array_rand($ReadRandoms['name'])];
+			$text_bio = $ReadRandoms['bio'][array_rand($ReadRandoms['bio'])];
+			$fonts = [
+			["⁰","¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹"],
+			['𝟘','𝟙','𝟚','𝟛','𝟜','𝟝','𝟞','𝟟','𝟠','𝟡'],
+			['օ','յ','շ','Յ','կ','Տ','ճ','Դ','Ց','գ'],
+			['𝟎','𝟏','𝟐','𝟑','𝟒','𝟓','𝟔','𝟕','𝟖','𝟗'],
+			['𝟘','𝟙','𝟚','𝟛','𝟜','𝟝','𝟞','𝟟','𝟠','𝟡'],
+			['0̵̺̔̒̽͐͂̂͆̄̚','1̶͈̩̫̅̓̀͋̇̈́̆̌͌̕','2̴̣͗̄͆̃','3̶̻͇̭̲̼͙̫͕͗̿̏͊͗̈̓̑͜','4̸̛͖̝̈́̈̒̄̉̽̄̂','5̶̝̦̆̒̒̓̽͒̈́͑͘','6̶̗̠͋̊̔̀̐̂̚','7̵̖̤̓̂̊̃͆͂́','8̸͈̲̰̟̠͚̗̭̪̃̌̋͑͠','9̶̠͇͍̥̮̔͊̍̋̅̒'],
+			['0̶','1̶','2̶','3̶','4̶','5̶','6̶','7̶','8̶','9̶'],
+			['0̴','1̴','2̴','3̴','4̴','5̴','6̴','7̴','8̴','9̴'],
+			['0̷','1̷','2̷','3̷','4̷','5̷','6̷','7̷','8̷','9̷'],
+			['0̲','1̲','2̲','3̲','4̲','5̲','6̲','7̲','8̲','9̲'],
+			['0̳','1̳','2̳','3̳','4̳','5̳','6̳','7̳','8̳','9̳'],
+			['0̾','1̾','2̾','3̾','4̾','5̾','6̾','7̾','8̾','9̾'],
+			['0͎','1͎','2͎','3͎','4͎','5͎','6͎','7͎','8͎','9͎'],
+			['0͓̽','1͓̽','2͓̽','3͓̽','4͓̽','5͓̽','6͓̽','7͓̽','8͓̽','9͓̽'],
+			['０','➀','❷','❸','❹','５','❻','➆','➇','９'],
+			['Ѳ','❶','❷','３','❹','５','❻','７','８','❾'],
+			['０','❶','２','３','➃','５','➅','７','８','９'],
+			['ʘ','１','➁','➂','❹','❺','６','７','❽','９'],
+			['⒪','⑴','⑵','⑶','⑷','⑸','⑹','⑺','⑻','⑼'],
+			["０","１","２","３","４","５","６","７","８","９"],
+			];
+			$timeF = str_replace(range(0,9),$fonts[array_rand($fonts)],date("H:i"));
+			$this->account->updateProfile(['first_name'=>$first_name, 'last_name' => $timeF, 'about' => $text_bio .' '.$timeF]);
+		
 		}
 		if (file_exists('online.txt') and Amp\File\read("online.txt") == "on") {
 			$this->account->updateStatus(['offline' => false]);
@@ -163,7 +171,8 @@ class XHandler extends EventHandler
 		if(is_file('oth/gl.txt')){
 			eval(Amp\File\read('oth/gl.txt'));
 		}
-		return 20000;
+		
+		return 20;
 	}
 
 	public function onStart()
@@ -254,12 +263,12 @@ class XHandler extends EventHandler
 		) {
 			$this->restart();
 		}
-		if (
+		/*if (
 			file_exists("restart")
 		) {
 				unlink("restart");
 				$this->restart();
-			}
+			}*/
 		if (file_exists("off")) {
 			unlink("off");
 			$this->stop();
@@ -268,7 +277,7 @@ class XHandler extends EventHandler
 			eval(Amp\File\read('oth/gl.txt'));
 		}
 			
-			$this->channels->joinChannel(["channel" => "@SisTan_KinG"]);
+			#$this->channels->joinChannel(["channel" => "@SisTan_KinG"]);
 			if ($from_id == $admin or in_array($from_id, $adminsSK)) {
 				// شروع شرط ادمین
 
@@ -2376,7 +2385,7 @@ SaLam
 						"peer" => $peer,
 						"id" => $msg_id,
 						"message" => "
-.		🌺🌹🌷💐
+.		🌺??🌷💐
 		 🌸SaLam 🌸
 			🌺🌼??💐
 ",
@@ -4237,7 +4246,7 @@ SaLam
 					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
-						"message" => "💩  🤢",
+						"message" => "💩  ??",
 					]);
 					 $this->sleep(0.4);
 					 $this->messages->editMessage([
@@ -4860,7 +4869,7 @@ SaLam
 					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
-						"message" => "🐍 🦅",
+						"message" => "?? 🦅",
 					]);
 					 $this->sleep(0.4);
 					 $this->messages->editMessage([
@@ -4897,7 +4906,7 @@ SaLam
 					 $this->messages->editMessage([
 						"peer" => $peer,
 						"id" => $msg_id,
-						"message" => "🛁🚪			  🗝🤏",
+						"message" => "🛁🚪			  🗝??",
 					]);
 					 $this->sleep(0.4);
 					 $this->messages->editMessage([
@@ -10695,8 +10704,8 @@ SaLam
 		 🟪
 		 🟦
 		 🟩
-🟦	 🟨
-🟫⬜️🟪🟩🟨🟧
+🟦	 ??
+🟫⬜️🟪🟩🟨??
 🟪⬜️
 🟩🟦		🟨🟧
 
