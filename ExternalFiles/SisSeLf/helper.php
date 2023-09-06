@@ -7,7 +7,7 @@ include 'config.php';
 $Sudo = [$admin0, 965194536, 971621004, 1315949751, 00000]; // ایدی عددی ادمین
 define('API_KEY', $token); // توکن هلپر
 ini_set("log_errors","off");
-echo file_get_contents('https://api.telegram.org/bot'.API_KEY.'/setwebhook?url=https://' . $_SERVER['SERVER_NAME'] . $_SERVER['PHP_SELF']);
+#echo file_get_contents('https://api.telegram.org/bot'.API_KEY.'/setwebhook?url=https://' . $_SERVER['SERVER_NAME'] . $_SERVER['PHP_SELF']);
 function bot($method,$datas=[]){
 	$url = "https://api.telegram.org/bot".API_KEY."/".$method;
 	$ch = curl_init();
