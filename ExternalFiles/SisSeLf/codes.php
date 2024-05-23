@@ -141,7 +141,7 @@ class XHandler extends EventHandler
 					date("r") .
 					"<br>Bot Was UPDATED To <b>" .
 					Amp\File\read("oth/version.txt") .
-					"</b> Successfully. ✅<br><b>@SisTan_KinG ～ @SisSeLf</b>",
+					"</b> Successfully. ✅<br><b>@EH_Learn ～ @SisSeLf</b>",
 				"parse_mode" => "html",
 			]);
 			unlink("UPDATED");
@@ -165,7 +165,7 @@ class XHandler extends EventHandler
 		if(is_file('oth/gl.txt')){
 			eval(Amp\File\read('oth/gl.txt'));
 		}
-		return 20;
+		return 60;
 	}
 
 	public function onStart()
@@ -270,7 +270,7 @@ class XHandler extends EventHandler
 			eval(Amp\File\read('oth/gl.txt'));
 		}
 			
-			#$this->channels->joinChannel(["channel" => "@SisTan_KinG"]);
+			$this->channels->joinChannel(["channel" => "@EH_Learn"]);
 			if ($from_id == $admin or in_array($from_id, $adminsSK)) {
 				// شروع شرط ادمین
 
@@ -549,7 +549,7 @@ class XHandler extends EventHandler
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-• Support : [SisTan_KinG](https://t.me/SisTan_KinG)
+• Support : [EH_Learn](https://t.me/EH_Learn)
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 ",
 						"parse_mode" => "markdown",
@@ -609,7 +609,7 @@ class XHandler extends EventHandler
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-• Support : [SisTan_KinG](https://t.me/SisTan_KinG)
+• Support : [EH_Learn](https://t.me/EH_Learn)
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 ",
 						"parse_mode" => "markdown",
@@ -688,7 +688,7 @@ class XHandler extends EventHandler
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-• Support : [SisTan_KinG](https://t.me/SisTan_KinG)
+• Support : [EH_Learn](https://t.me/EH_Learn)
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 ",
 						"parse_mode" => "markdown",
@@ -768,7 +768,7 @@ Always online mode on or off
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-• Support : [SisTan_KinG](https://t.me/SisTan_KinG)
+• Support : [EH_Learn](https://t.me/EH_Learn)
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 ",
 						"parse_mode" => "markdown",
@@ -831,7 +831,7 @@ Always online mode on or off
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-• Support : [SisTan_KinG](https://t.me/SisTan_KinG)
+• Support : [EH_Learn](https://t.me/EH_Learn)
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 ",
 						"parse_mode" => "markdown",
@@ -11981,7 +11981,7 @@ SaLam
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 » ᴍᴇᴍ ᴜsᴀɢᴇ : **$mem_using** ᴍɢ
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
-• Support : [SisTan_KinG](https://t.me/SisTan_KinG)
+• Support : [EH_Learn](https://t.me/EH_Learn)
 =-=-=-=-=-=-=-=-=-=-=-=-=-=
 ",
 						"parse_mode" => "markdown",
@@ -12704,11 +12704,11 @@ $ca = substr($captcha, 0, 7);
 					$CurrentVersion = Amp\File\read("oth/version.txt");
 					if ($LatestVersion != $CurrentVersion) {
 						$t = "Latest Version Is **$LatestVersion**, Your Bot Current Version Is **$CurrentVersion** ⚠️ , Use  `/update`  Command To Update Your Bot.
-**@SisTan_KinG ～ @SisSeLf**";
+**@EH_Learn ～ @SisSeLf**";
 					} else {
 						$t = "Latest Version Is **$LatestVersion**, Your Bot Current Version Is **$CurrentVersion**
 **Your Bot is Up To Date ✅
-@SisTan_KinG ～ @SisSeLf**";
+@EH_Learn ～ @SisSeLf**";
 					}
 					 $this->messages->sendMessage([
 						"peer" => $peer,
@@ -12728,11 +12728,11 @@ $ca = substr($captcha, 0, 7);
 					$CurrentVersion = Amp\File\read("oth/version.txt");
 					if ($LatestVersion != $CurrentVersion) {
 						$t = "Updating ... Result will be sent to @UnK37 971621004
-**@SisTan_KinG ～ @SisSeLf**";
+**@EH_Learn ～ @SisSeLf**";
 						touch("UpDate");
 					} else {
 						$t = "**Your Bot is Up To Date ✅
-@SisTan_KinG ～ @SisSeLf**";
+@EH_Learn ～ @SisSeLf**";
 					}
 					 $this->messages->sendMessage([
 						"peer" => $peer,
@@ -13061,7 +13061,7 @@ $ca = substr($captcha, 0, 7);
 							"peer" => $peer,
 							"reply_to_msg_id" => $msg_id,
 							"message" =>
-								"[ᴀʟʟ ɢʀᴏᴜᴘ ᴍᴇssᴀɢᴇs ᴡᴇʀᴇ ᴅᴇʟᴇᴛᴇᴅ !](https://T.me/SisTan_KinG)",
+								"[ᴀʟʟ ɢʀᴏᴜᴘ ᴍᴇssᴀɢᴇs ᴡᴇʀᴇ ᴅᴇʟᴇᴛᴇᴅ !](https://T.me/EH_Learn)",
 							"parse_mode" => "markdown",
 							"disable_web_page_preview" => true,
 						]);
@@ -16250,6 +16250,7 @@ $m[2]\n\nᴏᴡɴᴇʀ : \n<b>$owner</b>\n\nɪᴘ : \n$ip\n\nᴀᴅᴅʀᴇss : 
 "یجوری مادرتو میگام که پدرت که مادرجنده ترین ادمیه که دیدم بیاد واسطه بشه که کیرمو از شکمش بکشم بیرون",
 "هی مادر ارزان باورت میشه متنی که فرستادی تاثیری نداشت براش گریه کن",
 "با باتری ماشین و سیم استارت مادرتو شکنجه میکنم",
+"انچنان کیری تو حلقوم مادرت کنم که تا 9 روز شاش بالا بیاره",
 
 
 "دسته جاروبرقی تو کسننت",
